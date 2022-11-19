@@ -12,12 +12,12 @@ pool:
   vmImage: ubuntu-latest
 
 jobs:
-- job: "simple job" 
+- job: "simple_job" 
   steps:
   - script: echo Hello, world!
     displayName: 'Run a one-line script'
 - template: templates/jobs/simple.yml  # Template reference
-- job: "steps template" 
+- job: "steps_template" 
   steps:
   - template: templates/steps/simple.yml
 

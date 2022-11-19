@@ -1,5 +1,5 @@
 jobs:
-- job: "simple job template" 
+- job: "simple_job_template" 
   pool:
     vmImage: 'ubuntu-latest'
   steps:
