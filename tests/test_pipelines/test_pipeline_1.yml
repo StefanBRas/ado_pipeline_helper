@@ -6,7 +6,7 @@
 trigger:
 - main
 
-name: test_1 
+name: test1 
 
 pool:
   vmImage: ubuntu-latest
