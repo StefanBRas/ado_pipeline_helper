@@ -1,0 +1,7 @@
+jobs:
+- job: "simple job template" 
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - bash: echo "Hello Ubuntu"
+

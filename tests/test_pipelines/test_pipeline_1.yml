@@ -6,14 +6,18 @@
 trigger:
 - main
 
+name: test_1 
+
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+jobs:
+- job: "simple job" 
+  steps:
+  - script: echo Hello, world!
+    displayName: 'Run a one-line script'
+- template: templates/jobs/simple.yml  # Template reference
+- job: "steps template" 
+  steps:
+  - template: templates/steps/simple.yml
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
