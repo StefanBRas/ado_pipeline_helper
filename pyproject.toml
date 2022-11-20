@@ -17,6 +17,7 @@ ruamel-yaml = "^0.17.21"
 [tool.poetry.group.dev.dependencies]
 nox-poetry = "^1.0.2"
 azure-devops = "^6.0.0b4"
+ruff = "^0.0.129"
 
 [build-system]
 requires = ["poetry-core"]

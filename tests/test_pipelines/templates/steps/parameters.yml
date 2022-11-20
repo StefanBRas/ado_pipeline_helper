@@ -1,7 +1,7 @@
 parameters:
-  name: parameter1
+- name: parameter1
   default: default_value
 
 steps:
-- bash: echo ${{ parameters.parameter1}} 
+- bash: echo ${{ parameters.parameter1 }} 
   displayName: ParametersStep
