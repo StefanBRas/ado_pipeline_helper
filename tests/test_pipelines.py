@@ -12,4 +12,6 @@ def test_validate(client: Client):
     assert isinstance(preview, Run)
     assert isinstance(validated, Run), client.load_yaml()
     assert yaml.load(validated.final_yaml) == yaml.load(preview.final_yaml)
+    print(preview.final_yaml)
+    assert False
 

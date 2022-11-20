@@ -21,4 +21,6 @@ jobs:
   steps:
   - template: templates/steps/simple.yml
   - template: templates/steps/parameters.yml
+    parameters:
+      parameter1: false # set to a non-boolean value to have the build fail
 
