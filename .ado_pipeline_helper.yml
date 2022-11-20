@@ -1,0 +1,8 @@
+organization: sbras
+project: pypeline
+pipelines:
+  test1: 
+    path: tests/test_pipelines/test_pipeline_1.yml
+  test1_id: 
+    path: tests/test_pipelines/test_pipeline_1.yml
+    pipeline_id: 3
