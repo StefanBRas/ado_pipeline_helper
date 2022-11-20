@@ -20,4 +20,5 @@ jobs:
 - job: "steps_template" 
   steps:
   - template: templates/steps/simple.yml
+  - template: templates/steps/parameters.yml
 

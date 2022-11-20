@@ -1,0 +1,7 @@
+parameters:
+  name: parameter1
+  default: default_value
+
+steps:
+- bash: echo "simple step"
+  displayName: ParametersStep
