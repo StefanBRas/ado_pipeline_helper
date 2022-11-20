@@ -10,7 +10,6 @@ packages = [{include = "ado_pipeline_helper", from = "src"}]
 python = "^3.10"
 pydantic = {extras = ["dotenv"], version = "^1.10.2"}
 pyyaml = "^6.0"
-pytest = "^7.2.0"
 ruamel-yaml = "^0.17.21"
 typer = {extras = ["all"], version = "^0.7.0"}
 
@@ -20,6 +19,8 @@ nox-poetry = "^1.0.2"
 azure-devops = "^6.0.0b4"
 ruff = "^0.0.129"
 black = "^22.10.0"
+isort = "^5.10.1"
+pytest = "^7.2.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -27,3 +28,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 ado-pipeline-helper = "ado_pipeline_helper.cli:cli"
+
+[tool.isort]
+profile = "black"

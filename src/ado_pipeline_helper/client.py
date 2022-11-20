@@ -1,11 +1,13 @@
-from azure.devops.connection import Connection
-from azure.devops.v6_0.pipelines.models import Run
-from azure.devops.exceptions import AzureDevOpsServiceError
-from msrest.authentication import BasicAuthentication
-from ado_pipeline_helper.yaml_loader import YamlResolver, yaml
-from ado_pipeline_helper.config import PipelineConfig
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+
+from azure.devops.connection import Connection
+from azure.devops.exceptions import AzureDevOpsServiceError
+from azure.devops.v6_0.pipelines.models import Run
+from msrest.authentication import BasicAuthentication
+
+from ado_pipeline_helper.config import PipelineConfig
+from ado_pipeline_helper.yaml_loader import YamlResolver, yaml
 
 
 class PipelineValidationError(Exception):
@@ -36,7 +38,7 @@ class Client:
         return connection.clients_v6_0.get_pipelines_client()
 
     def _get_pipeline_id(self) -> int:
-        name = yaml.load(Path(self._config.path).read_text())['name']
+        name = yaml.load(Path(self._config.path).read_text())["name"]
         project = self._config.settings.project
         pipelines = self._pipeline_client.list_pipelines(project)
         for pipeline in pipelines:

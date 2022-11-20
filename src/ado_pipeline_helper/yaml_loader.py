@@ -1,9 +1,11 @@
+import re
 from io import StringIO
 from pathlib import Path
-import re
 from typing import Optional, OrderedDict, TypeVar
-from ado_pipeline_helper.utils import listify
+
 from ruamel.yaml import YAML
+
+from ado_pipeline_helper.utils import listify
 
 
 class MyYAML(YAML):
