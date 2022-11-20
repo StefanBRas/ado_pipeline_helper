@@ -2,16 +2,18 @@ import re
 from io import StringIO
 from pathlib import Path
 from typing import Literal, Optional, OrderedDict, TypeVar
-from pydantic import BaseModel
 
+from pydantic import BaseModel
 from ruamel.yaml import YAML
 
 from ado_pipeline_helper.utils import listify
 
+
 class Parameter(BaseModel):
     name: str
     default: Optional[str]
-    type: Literal['boolean', 'string']
+    type: Literal["boolean", "string"]
+
 
 class Parameters(BaseModel):
     __root__: Parameter
@@ -23,7 +25,6 @@ class Parameters(BaseModel):
 
         """
         pass
-    
 
 
 class MyYAML(YAML):
@@ -55,6 +56,7 @@ def id_func(obj):
 
 
 T = TypeVar("T")
+
 
 def traverse(obj: T, mod_func=id_func) -> T:
     if (result := mod_func(obj)) is not None:

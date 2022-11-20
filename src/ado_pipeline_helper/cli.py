@@ -1,21 +1,19 @@
 from pathlib import Path
 from typing import Optional
-from azure.devops.exceptions import AzureDevOpsServiceError
 
 import typer
-from azure.devops.v6_0.pipelines.models import Run
+from azure.devops.exceptions import AzureDevOpsServiceError
+from pydantic import SecretStr
 from rich import print
-from pydantic import SecretStr, parse_obj_as
 
 from ado_pipeline_helper.client import Client
 from ado_pipeline_helper.config import (
     DEFAULT_CONFIG_PATH,
-    CliSettings,
     ClientSettings,
+    CliSettings,
     PipeLineSettingsId,
-    PipeLineSettingsName
+    PipeLineSettingsName,
 )
-
 
 TOKEN_ENV_VAR = "AZURE_DEVOPS_EXT_PAT"
 
@@ -34,8 +32,9 @@ def local_pipeline_callback(name: Optional[str]):
     return name
 
 
-pipeline_local_name_option = typer.Option('default', callback=local_pipeline_callback)
+pipeline_local_name_option = typer.Option("default", callback=local_pipeline_callback)
 token_option = typer.Option(..., envvar=TOKEN_ENV_VAR)
+
 
 def _get_client(
     path: Optional[Path],
@@ -44,19 +43,21 @@ def _get_client(
     token: str,
     organization: str,
     project: str,
-    ) -> Client:
+) -> Client:
     if organization and project and path:
         settings = CliSettings(organization=organization, project=project, pipelines={})
         if pipeline_id is None:
-            settings.pipelines['default'] = PipeLineSettingsName.from_path(path=path)
+            settings.pipelines["default"] = PipeLineSettingsName.from_path(path=path)
         else:
-            settings.pipelines['default'] = PipeLineSettingsId(path=path, name=None, id = pipeline_id)
+            settings.pipelines["default"] = PipeLineSettingsId(
+                path=path, name=None, id=pipeline_id
+            )
     else:
         settings = CliSettings.read()
-    client_settings = ClientSettings.from_cli_settings(settings, pipeline_local_name, token=SecretStr(token))
-    return Client.from_client_settings(client_settings) 
-
-
+    client_settings = ClientSettings.from_cli_settings(
+        settings, pipeline_local_name, token=SecretStr(token)
+    )
+    return Client.from_client_settings(client_settings)
 
 
 @cli.command()
@@ -69,7 +70,9 @@ def preview(
     project: str = typer.Option(None),
 ):
     """Fetch remote pipeline yaml as a single file."""
-    client = _get_client(path, pipeline_id, pipeline_local_name, token, organization, project)
+    client = _get_client(
+        path, pipeline_id, pipeline_local_name, token, organization, project
+    )
     try:
         run = client.preview()
         print(run.final_yaml)
@@ -88,7 +91,9 @@ def validate(
     project: str = typer.Option(None),
 ):
     """Check current local pipeline for errors."""
-    client = _get_client(path, pipeline_id, pipeline_local_name, token, organization, project)
+    client = _get_client(
+        path, pipeline_id, pipeline_local_name, token, organization, project
+    )
     try:
         run = client.validate()
         print(run.final_yaml)

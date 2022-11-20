@@ -2,12 +2,11 @@ from pathlib import Path
 from typing import Optional, Union
 
 from azure.devops.connection import Connection
-from azure.devops.exceptions import AzureDevOpsServiceError
 from azure.devops.v6_0.pipelines.models import Run
 from msrest.authentication import BasicAuthentication
 from pydantic import SecretStr
 
-from ado_pipeline_helper.config import ClientSettings 
+from ado_pipeline_helper.config import ClientSettings
 from ado_pipeline_helper.yaml_loader import YamlResolver
 
 
@@ -18,17 +17,20 @@ class PipelineValidationError(Exception):
 class PipelineNotFoundError(Exception):
     pass
 
+
 AdoResponse = Union[Run, str]
 
+
 class Client:
-    def __init__(self, 
-                 organization: str,
-                 project: str,
-                 token: SecretStr,
-                 pipeline_path: Path,
-                 pipeline_id: Optional[int],
-                 pipeline_name: Optional[str],
-                 ) -> None:
+    def __init__(
+        self,
+        organization: str,
+        project: str,
+        token: SecretStr,
+        pipeline_path: Path,
+        pipeline_id: Optional[int],
+        pipeline_name: Optional[str],
+    ) -> None:
         self._organization = organization
         self._project = project
         self._token = token
@@ -69,9 +71,7 @@ class Client:
         resolver = YamlResolver(self._pipeline_path)
         return resolver.get_yaml()
 
-    def _call_run_pipeline_endpoint(
-        self, run_parameters: Optional[dict] = None
-    ) -> Run:
+    def _call_run_pipeline_endpoint(self, run_parameters: Optional[dict] = None) -> Run:
         return self._pipeline_client.run_pipeline(
             pipeline_id=self.pipeline_id,
             project=self._project,
