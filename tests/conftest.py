@@ -3,6 +3,9 @@ from pydantic import SecretStr
 from typing import Iterable, Dict
 from ado_pipeline_helper import ClientSettings, Client
 from pathlib import Path
+import os
+
+from ado_pipeline_helper.cli import TOKEN_ENV_VAR
 
 
 @pytest.fixture
@@ -17,6 +20,15 @@ def client():
         pipeline_name=None
     )
     yield Client.from_client_settings(settings)
+
+@pytest.fixture
+def pat_env():
+    old = os.environ.get(TOKEN_ENV_VAR)
+    personal_access_token = "rvg2pydxvliujhijmcjpmb5kh7sicjefq6sby5iav7ncwwxu5xdq"
+    os.environ[TOKEN_ENV_VAR] = personal_access_token
+    yield
+    if old is not None:
+        os.environ[TOKEN_ENV_VAR] = old
 
 
 test_pipeline_dir = Path(__file__).parent.joinpath("test_pipeline")

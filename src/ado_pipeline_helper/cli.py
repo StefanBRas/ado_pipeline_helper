@@ -12,10 +12,12 @@ from ado_pipeline_helper.config import (
     DEFAULT_CONFIG_PATH,
     CliSettings,
     ClientSettings,
-    PipeLineSettings,
     PipeLineSettingsId,
     PipeLineSettingsName
 )
+
+
+TOKEN_ENV_VAR = "AZURE_DEVOPS_EXT_PAT"
 
 cli = typer.Typer()
 
@@ -33,7 +35,7 @@ def local_pipeline_callback(name: Optional[str]):
 
 
 pipeline_local_name_option = typer.Option('default', callback=local_pipeline_callback)
-token_option = typer.Option(..., envvar="AZURE_DEVOPS_EXT_PAT")
+token_option = typer.Option(..., envvar=TOKEN_ENV_VAR)
 
 def _get_client(
     path: Optional[Path],
