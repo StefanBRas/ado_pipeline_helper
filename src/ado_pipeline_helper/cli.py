@@ -5,9 +5,21 @@ import typer
 from rich import print
 from ado_pipeline_helper.client import Client
 
-from ado_pipeline_helper.config import PipelineConfig, Settings
+from ado_pipeline_helper.config import CONFIG_PATH, PipelineConfig, Settings, get_app_config
 
 cli = typer.Typer()
+
+def local_pipeline_callback(name: Optional[str]):
+    if name is None:
+        return name
+    app_config = get_app_config()
+    pipeline_names = app_config['pipelines'].keys()
+    if name not in pipeline_names:
+        raise typer.BadParameter(f"Local Pipeline name {name} not found in {CONFIG_PATH}. Available: {list(pipeline_names)}")
+    return name
+
+pipeline_local_name_option = typer.Option(None, callback=local_pipeline_callback)
+
 
 def get_client(
     path: Optional[Path] = None,
@@ -33,7 +45,7 @@ def get_client(
 @cli.command()
 def preview(
     path: Optional[Path] =  typer.Option(None),
-    pipeline_local_name: str =  typer.Option(None),
+    pipeline_local_name: str =  pipeline_local_name_option,
     organization: str =  typer.Option(None),
     project: str = typer.Option(None) ,
     pipeline_id: Optional[int] = typer.Option(None),
@@ -60,7 +72,7 @@ def preview(
 @cli.command()
 def validate(
     path: Optional[Path] =  typer.Option(None),
-    pipeline_local_name: str =  typer.Option(None),
+    pipeline_local_name: str =  pipeline_local_name_option,
     organization: str =  typer.Option(None),
     project: str = typer.Option(None) ,
     pipeline_id: Optional[int] = typer.Option(None),

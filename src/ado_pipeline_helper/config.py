@@ -3,6 +3,14 @@ from typing import Any, Optional
 from pathlib import Path
 from ado_pipeline_helper.yaml_loader import yaml
 
+CONFIG_PATH = ".ado_pipeline_helper.yml"
+
+def get_app_config() -> dict:
+    path = Path(CONFIG_PATH)
+    if path.exists:
+        return yaml.load(path.read_text())
+    else:
+        return {'pipelines': []}
 
 
 class Settings(BaseSettings):
