@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from azure.devops.connection import Connection
 from azure.devops.exceptions import AzureDevOpsServiceError
@@ -17,6 +17,7 @@ class PipelineValidationError(Exception):
 class PipelineNotFoundError(Exception):
     pass
 
+AdoResponse = Union[Run, str]
 
 class Client:
     def __init__(self, config: PipelineConfig) -> None:
@@ -55,7 +56,7 @@ class Client:
 
     def _call_run_pipeline_endpoint(
         self, run_parameters: Optional[dict] = None
-    ) -> Run | str:
+    ) -> AdoResponse:
         try:
             return self._pipeline_client.run_pipeline(
                 pipeline_id=self.pipeline_id,
@@ -65,14 +66,14 @@ class Client:
         except AzureDevOpsServiceError as e:
             return e.message
 
-    def validate(self) -> Run | str:
+    def validate(self) -> AdoResponse:
         run_parameters = {"preview_run": True, "yamlOverride": self.load_yaml()}
         return self._call_run_pipeline_endpoint(run_parameters)
 
-    def run(self) -> Run | str:
+    def run(self) -> AdoResponse:
         return self._call_run_pipeline_endpoint()
 
-    def preview(self) -> Run | str:
+    def preview(self) -> AdoResponse:
         run_parameters = {
             "preview_run": True,
         }
