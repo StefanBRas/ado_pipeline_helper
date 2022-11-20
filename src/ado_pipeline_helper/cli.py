@@ -23,7 +23,8 @@ def local_pipeline_callback(name: Optional[str]):
     pipeline_names = app_config["pipelines"].keys()
     if name not in pipeline_names:
         raise typer.BadParameter(
-            f"Local Pipeline name {name} not found in {CONFIG_PATH}. Available: {list(pipeline_names)}"
+            f"Local Pipeline name {name} not found in {CONFIG_PATH}."
+            f"Available: {list(pipeline_names)}"
         )
     return name
 

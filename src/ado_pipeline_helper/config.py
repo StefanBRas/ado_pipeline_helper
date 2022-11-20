@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseSettings, Field, SecretStr
+from pydantic import BaseSettings, SecretStr
 
 from ado_pipeline_helper.yaml_loader import yaml
 

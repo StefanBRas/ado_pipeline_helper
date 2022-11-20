@@ -31,3 +31,7 @@ ado-pipeline-helper = "ado_pipeline_helper.cli:cli"
 
 [tool.isort]
 profile = "black"
+
+[tool.ruff]
+per-file-ignores = {"__init__.py" = ["E402"]}
+line-length = 100
