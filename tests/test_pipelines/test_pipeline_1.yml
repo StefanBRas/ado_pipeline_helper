@@ -16,8 +16,8 @@ jobs:
   steps:
   - script: echo Hello, world!
     displayName: 'Run a one-line script'
-- template: templates/jobs/simple.yml  # Template reference
-- template: templates/jobs/parameters.yml  # Template reference
+- template: templates/jobs/simple.yml
+- template: templates/jobs/parameters.yml
   parameters:
     parameter1: "value"
 - job: "steps_template" 

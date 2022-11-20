@@ -1,17 +1,19 @@
 import pytest
 from pydantic import SecretStr
 from typing import Iterable, Dict
-from ado_pipeline_helper import Config, Client
+from ado_pipeline_helper import Settings, PipelineConfig, Client
 from pathlib import Path
 
 @pytest.fixture
-def config():
+def settings():
     personal_access_token = "rvg2pydxvliujhijmcjpmb5kh7sicjefq6sby5iav7ncwwxu5xdq"
-    yield Config(organization="sbras", project="pypeline",
-                              pipeline_id=3,
+    yield Settings(organization="sbras", project="pypeline",
                               token = SecretStr(personal_access_token),
-                              path="tests/test_pipelines/test_pipeline_1.yml"
                               )
+
+@pytest.fixture
+def config(settings):
+    yield PipelineConfig(settings=settings, pipeline_id=3, path="tests/test_pipelines/test_pipeline_1.yml")
 
 @pytest.fixture
 def client(config):

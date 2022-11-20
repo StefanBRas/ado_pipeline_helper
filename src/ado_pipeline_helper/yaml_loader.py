@@ -1,7 +1,7 @@
 from io import StringIO
 from pathlib import Path
 import re
-from typing import Optional, OrderedDict
+from typing import Optional, OrderedDict, TypeVar
 from ado_pipeline_helper.utils import listify
 from ruamel.yaml import YAML
 
@@ -16,7 +16,7 @@ class MyYAML(YAML):
             return stream.getvalue()
 
 yaml = MyYAML()
-yaml.preserve_quotes = True
+yaml.preserve_quotes = True # type:ignore 
 unordered_yaml=MyYAML(typ='safe')
 
 def is_jobs_template(dct: dict):
@@ -28,7 +28,9 @@ def is_steps_template(dct: dict):
 def id_func(obj):
     return obj
 
-def traverse(obj, mod_func = id_func):
+T = TypeVar('T')
+
+def traverse(obj: T, mod_func = id_func) -> T:
     if (result:= mod_func(obj)) is not None:
         return result
     if isinstance(obj, list):
@@ -36,7 +38,7 @@ def traverse(obj, mod_func = id_func):
         for val in obj:
             result = traverse(val, mod_func)
             new_list.extend(listify(result))
-        return new_list
+        return new_list  # type:ignore  
     if isinstance(obj, dict):
         for key, val in list(obj.items()):
             result = traverse(val, mod_func)
@@ -67,10 +69,28 @@ class YamlResolver:
         return str(yaml.dump(yaml_resolved))
 
     def handle_jobs_template_dict(self, dct, template_reference) -> dict:
-        return dct['jobs']
+        """Resolves jobs template yaml from template reference.
+
+        TODO: Breaks on everything that is not a string.
+        """
+        jobs = dct.pop('jobs')
+        parameters = dct.get('parameters')
+        if parameters:
+            parameter_values = template_reference.get('parameters', {})
+            for parameter in parameters:
+                default = parameter.get('default')
+                if default is not None:
+                    parameter_values.setdefault(parameter['name'], default)
+            def resolve_steps(obj):
+                if type(obj) == str:
+                    # TODO: should consider type of parameter
+                    return self.replace_parameters(obj, parameter_values)
+                return None
+            jobs = traverse(jobs, resolve_steps)
+        return jobs 
 
     def handle_steps_template_dict(self, dct, template_reference) -> dict:
-        """Resolves template yaml from yaml reference.
+        """Resolves steps template yaml from template reference.
 
         TODO: Breaks on everything that is not a string.
         """
