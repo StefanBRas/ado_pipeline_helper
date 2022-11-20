@@ -17,10 +17,13 @@ jobs:
   - script: echo Hello, world!
     displayName: 'Run a one-line script'
 - template: templates/jobs/simple.yml  # Template reference
+- template: templates/jobs/parameters.yml  # Template reference
+  parameters:
+    parameter1: "value"
 - job: "steps_template" 
   steps:
   - template: templates/steps/simple.yml
   - template: templates/steps/parameters.yml
     parameters:
-      parameter1: "value" # set to a non-boolean value to have the build fail
+      parameter1: "value"
 

@@ -1,0 +1,9 @@
+parameters:
+- name: parameter1
+  default: default_value
+
+jobs:
+- job: "parameters_job_template" 
+  steps:
+  - bash: echo ${{ parameters.parameter1 }} 
+
