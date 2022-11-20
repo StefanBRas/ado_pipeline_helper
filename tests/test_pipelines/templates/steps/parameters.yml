@@ -3,5 +3,5 @@ parameters:
   default: default_value
 
 steps:
-- bash: echo {{ parameters.parameter1}} 
+- bash: echo ${{ parameters.parameter1}} 
   displayName: ParametersStep
