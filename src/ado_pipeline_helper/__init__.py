@@ -1,9 +1,11 @@
 from pydantic import BaseModel, SecretStr
 from azure.devops.connection import Connection
+from azure.devops.v6_0.pipelines.models import Run
 from azure.devops.exceptions import AzureDevOpsServiceError
 from msrest.authentication import BasicAuthentication
-import yaml
-from yaml.constructor import ConstructorError
+from ado_pipeline_helper.yaml_loader import YamlResolver
+from typing import Optional
+from pathlib import Path
 
 
 class Config(BaseModel):
@@ -11,48 +13,60 @@ class Config(BaseModel):
     project: str
     pipeline_id: int
     token: SecretStr
+    path: str
 
-def validate(config: Config, yaml_override: str):
-    credentials = BasicAuthentication('', config.token.get_secret_value())
-    organization_url = f'https://dev.azure.com/{config.organization}'
-    connection = Connection(base_url=organization_url, creds=credentials)
-    pipeline_client = connection.clients_v6_0.get_pipelines_client()
-    try:
-        return pipeline_client.run_pipeline(
-            pipeline_id=config.pipeline_id,
-            project=config.project,
-            run_parameters={
-                "preview_run": True,
-                "yamlOverride": yaml_override 
-            }
-        )
-    except AzureDevOpsServiceError as e:
-        print(e.message)
+class PipelineValidationError(Exception):
+    pass
 
+class Client:
+    def __init__(self, config: Config) -> None:
+        self._config = config
+        self.pipeline_client = self._get_pipeline_client(config)
 
-def template_loader(loader, node, deep=False):
-    """if something is a template, resolve it.
+    def _get_pipeline_client(self, config: Config):
+        credentials = BasicAuthentication('', config.token.get_secret_value())
+        organization_url = f'https://dev.azure.com/{config.organization}'
+        connection = Connection(base_url=organization_url, creds=credentials)
+        return connection.clients_v6_0.get_pipelines_client()
 
-    """
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if key == 'template':
-            value = loader.construct_object(value_node, deep=deep)
-            with open(value) as template_file:
-                template = yaml.load(template_file, Loader=yaml.BaseLoader)
-    return loader.construct_mapping(node, deep)
+    def load_yaml(self) -> str:
+        resolver = YamlResolver(Path(self._config.path))
+        return resolver.get_yaml()
 
-yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, template_loader, yaml.BaseLoader)
+    def _call_run_pipeline_endpoint(self, run_parameters: Optional[dict]=None) -> Run | str:
+        try:
+            return self.pipeline_client.run_pipeline(
+                pipeline_id=self._config.pipeline_id,
+                project=self._config.project,
+                run_parameters=run_parameters if run_parameters is not None else {}
+            )
+        except AzureDevOpsServiceError as e:
+            return e.message
+        
 
-yaml_loaders = [yaml.load, yaml.safe_load]
+    def validate(self) -> Run | str:
+        run_parameters={
+                    "preview_run": True,
+                    "yamlOverride": self.load_yaml() 
+                }
+        return self._call_run_pipeline_endpoint(run_parameters)
 
+    def run(self) -> Run | str:
+        return self._call_run_pipeline_endpoint()
+
+    def preview(self) -> Run | str:
+        run_parameters={
+                    "preview_run": True,
+                }
+        return self._call_run_pipeline_endpoint(run_parameters)
 
 
 if __name__ == "__main__":
     personal_access_token = "rvg2pydxvliujhijmcjpmb5kh7sicjefq6sby5iav7ncwwxu5xdq"
     config = Config(organization="sbras", project="pypeline",
                               pipeline_id=1,
-                              token = SecretStr(personal_access_token),  # noqa
+                              token = SecretStr(personal_access_token),  # noqa,
+                    path="",
                               )
 
     pipeline_yaml="""trigger:
