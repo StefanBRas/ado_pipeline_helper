@@ -1,16 +1,20 @@
 from pathlib import Path
 from typing import Optional
+from azure.devops.exceptions import AzureDevOpsServiceError
 
 import typer
 from azure.devops.v6_0.pipelines.models import Run
 from rich import print
+from pydantic import SecretStr, parse_obj_as
 
 from ado_pipeline_helper.client import Client
 from ado_pipeline_helper.config import (
-    CONFIG_PATH,
-    PipelineConfig,
-    Settings,
-    get_app_config,
+    DEFAULT_CONFIG_PATH,
+    CliSettings,
+    ClientSettings,
+    PipeLineSettings,
+    PipeLineSettingsId,
+    PipeLineSettingsName
 )
 
 cli = typer.Typer()
@@ -19,92 +23,75 @@ cli = typer.Typer()
 def local_pipeline_callback(name: Optional[str]):
     if name is None:
         return name
-    app_config = get_app_config()
-    pipeline_names = app_config["pipelines"].keys()
+    pipeline_names = CliSettings.read().get_local_names()
     if name not in pipeline_names:
         raise typer.BadParameter(
-            f"Local Pipeline name {name} not found in {CONFIG_PATH}."
+            f"Local Pipeline name {name} not found in {DEFAULT_CONFIG_PATH}."
             f"Available: {list(pipeline_names)}"
         )
     return name
 
 
-pipeline_local_name_option = typer.Option(None, callback=local_pipeline_callback)
+pipeline_local_name_option = typer.Option('default', callback=local_pipeline_callback)
+token_option = typer.Option(..., envvar="AZURE_DEVOPS_EXT_PAT")
 
-
-def get_client(
-    path: Optional[Path] = None,
-    pipeline_local_name: Optional[str] = None,
-    organization: Optional[str] = None,
-    project: Optional[str] = None,
-    pipeline_id: Optional[int] = None,
-    token: Optional[str] = None,
-):
-    settings_args = {
-        **({"organization": organization} if organization is not None else {}),
-        **({"project": project} if project is not None else {}),
-        **({"token": token} if token is not None else {}),
-    }
-    settings = Settings(**settings_args)
-    if pipeline_local_name:
-        config = PipelineConfig.get_from_pipeline_local_name(
-            settings, pipeline_local_name
-        )
+def _get_client(
+    path: Optional[Path],
+    pipeline_id: Optional[int],
+    pipeline_local_name: str,
+    token: str,
+    organization: str,
+    project: str,
+    ) -> Client:
+    if organization and project and path:
+        settings = CliSettings(organization=organization, project=project, pipelines={})
+        if pipeline_id is None:
+            settings.pipelines['default'] = PipeLineSettingsName.from_path(path=path)
+        else:
+            settings.pipelines['default'] = PipeLineSettingsId(path=path, name=None, id = pipeline_id)
     else:
-        config = PipelineConfig(settings=settings, path=path, pipeline_id=pipeline_id)
-    client = Client(config)
-    return client
+        settings = CliSettings.read()
+    client_settings = ClientSettings.from_cli_settings(settings, pipeline_local_name, token=SecretStr(token))
+    return Client.from_client_settings(client_settings) 
+
+
 
 
 @cli.command()
 def preview(
     path: Optional[Path] = typer.Option(None),
+    pipeline_id: Optional[int] = typer.Option(None),
     pipeline_local_name: str = pipeline_local_name_option,
+    token: str = token_option,
     organization: str = typer.Option(None),
     project: str = typer.Option(None),
-    pipeline_id: Optional[int] = typer.Option(None),
-    token: Optional[str] = typer.Option(None),
 ):
     """Fetch remote pipeline yaml as a single file."""
-    client = get_client(
-        path,
-        pipeline_local_name,
-        organization,
-        project,
-        pipeline_id,
-        token,
-    )
-    preview = client.preview()
-    if isinstance(preview, Run):
-        print(preview.final_yaml)
-    else:
-        print(preview)
+    client = _get_client(path, pipeline_id, pipeline_local_name, token, organization, project)
+    try:
+        run = client.preview()
+        print(run.final_yaml)
+    except AzureDevOpsServiceError as e:
+        print(e.message)
         raise typer.Exit(code=1)
 
 
 @cli.command()
 def validate(
     path: Optional[Path] = typer.Option(None),
+    pipeline_id: Optional[int] = typer.Option(None),
     pipeline_local_name: str = pipeline_local_name_option,
+    token: str = token_option,
     organization: str = typer.Option(None),
     project: str = typer.Option(None),
-    pipeline_id: Optional[int] = typer.Option(None),
-    token: Optional[str] = typer.Option(None),
 ):
     """Check current local pipeline for errors."""
-    client = get_client(
-        path,
-        pipeline_local_name,
-        organization,
-        project,
-        pipeline_id,
-        token,
-    )
-    validate = client.validate()
-    if isinstance(validate, Run):
-        print(validate.final_yaml)
-    else:
-        print(validate)
+    client = _get_client(path, pipeline_id, pipeline_local_name, token, organization, project)
+    try:
+        run = client.validate()
+        print(run.final_yaml)
+    except AzureDevOpsServiceError as e:
+        print(e.message)
         raise typer.Exit(code=1)
 
 

@@ -1,75 +1,84 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
-from pydantic import BaseSettings, SecretStr
+from pydantic import BaseModel, BaseSettings, SecretStr
 
 from ado_pipeline_helper.yaml_loader import yaml
 
-CONFIG_PATH = ".ado_pipeline_helper.yml"
+DEFAULT_CONFIG_PATH = Path(".ado_pipeline_helper.yml")
+DEFAULT_PIPELINE_PATHS = [Path(path) for path in [
+    "azure-pipelines.yml",
+    ".azure-pipelines.yml",
+]]
 
 
-def get_app_config() -> dict:
-    path = Path(CONFIG_PATH)
-    if path.exists:
-        return yaml.load(path.read_text())
-    else:
-        return {"pipelines": []}
+class PipeLineSettingsId(BaseModel):
+    path: Path
+    name: Optional[str]
+    id: int
+
+class PipeLineSettingsName(BaseModel):
+    path: Path
+    name: str
+    id: Optional[int]
+
+    @classmethod
+    def from_path(cls, path: Path):
+        pipeline_yaml = yaml.load(path.read_text())
+        pipeline_name = pipeline_yaml.get('name')
+        return cls(
+            path=path,
+            name=pipeline_name,
+            id=None
+        )
 
 
-class Settings(BaseSettings):
+PipeLineSettings = Union[PipeLineSettingsId, PipeLineSettingsName]
+
+class CliSettings(BaseSettings):
+    organization: str
+    project: str
+    pipelines: dict[str, PipeLineSettings]
+
+    @classmethod
+    def read(cls, path: Path = DEFAULT_CONFIG_PATH):
+        content = yaml.load(path.read_text())
+        if not content.get('pipelines'):
+            for pipeline_path in DEFAULT_PIPELINE_PATHS:
+                if pipeline_path.exists():
+                    content['pipelines'] = {
+                        'default': {
+                            'path': pipeline_path
+                        }
+                    }
+        for pipeline in content['pipelines'].values():
+            if pipeline.get('name') is None:
+                pipeline_yaml = yaml.load(Path(pipeline['path']).read_text())
+                pipeline_name = pipeline_yaml.get('name')
+                if pipeline_name is not None:
+                    pipeline['name'] = pipeline_name
+        return cls(**content)
+
+    def get_local_names(self) -> list[str]:
+        return list(self.pipelines.keys())
+
+
+class ClientSettings(BaseModel):
     organization: str
     project: str
     token: SecretStr
-
-    class Config:
-        env_file_encoding = "utf-8"
-        fields = {
-            "token": {
-                "env": "AZURE_DEVOPS_EXT_PAT",
-            },
-        }
-        config_path = ".ado_pipeline_helper.yml"
-
-        @classmethod
-        def customise_sources(
-            cls,
-            init_settings,
-            env_settings,
-            file_secret_settings,
-        ):
-            def yaml_config_settings_source(settings: BaseSettings) -> dict[str, Any]:
-                """
-                A simple settings source that loads variables from a YAML file
-                at the project's root.
-
-                Here we happen to choose to use the `env_file_encoding` from Config
-                when reading `.ado_pipeline_helper.yml`
-                """
-                encoding = settings.__config__.env_file_encoding
-                path = settings.__config__.config_path
-                values = yaml.load(Path(path).read_text(encoding))
-                values.pop("pipelines")
-                return values
-
-            return (
-                init_settings,
-                yaml_config_settings_source,
-                env_settings,
-                file_secret_settings,
-            )
-
-
-class PipelineConfig(BaseSettings):
-    settings: Settings
+    pipeline_path: Path
     pipeline_id: Optional[int]  # If not set, fetches from name of pipeline
-    path: Path
-
-    class Config:
-        config_path = ".ado_pipeline_helper.yml"
+    pipeline_name: Optional[str] # TODO maybe add validator one of this two fields must be set
 
     @classmethod
-    def get_from_pipeline_local_name(cls, settings: Settings, pipeline_local_name: str):
-        config_path = cls.__config__.config_path
-        config = yaml.load(Path(config_path).read_text())
-        pipeline = config["pipelines"][pipeline_local_name]
-        return cls(settings=settings, **pipeline)
+    def from_cli_settings(cls, settings: CliSettings, pipeline_local_name:str, token: SecretStr) -> 'ClientSettings':
+        pipeline = settings.pipelines[pipeline_local_name]
+        return cls(
+            organization = settings.organization,
+            project = settings.project,
+            pipeline_path= pipeline.path,
+            pipeline_id=pipeline.id,
+            pipeline_name=pipeline.name,
+            token=token
+        )
