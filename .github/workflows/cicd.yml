@@ -34,9 +34,11 @@ jobs:
     - name: Install dev deps
       run: |
         poetry install --only=dev
-    - name: lint
+    - name: Check code style
       run: |
         make lint
+        poetry run black src --check
+        poetry run isort src --check
     - name: Nox
       run: |
         poetry run nox
