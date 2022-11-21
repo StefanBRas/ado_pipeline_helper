@@ -1,0 +1,8 @@
+parameters:
+- name: DIRECTORY 
+  type: string
+  default: "." 
+
+variables:
+- name: RELEASE_COMMAND
+  value: echo ${{ parameters.DIRECTORY }}

@@ -19,7 +19,7 @@ class Parameters(BaseModel):
     __root__: Parameter
 
     @classmethod
-    def from_parameter_dict(obj):
+    def from_parameter_dict(cls):
         """
         TODO finish this
 
@@ -49,6 +49,9 @@ def is_jobs_template(dct: dict):
 
 def is_steps_template(dct: dict):
     return "steps" in dct.keys()
+
+def is_variables_template(dct: dict):
+    return "variables" in dct.keys()
 
 
 def id_func(obj):
@@ -92,6 +95,8 @@ class YamlResolver:
                     return self.handle_jobs_template_dict(template_dict, obj)
                 elif is_steps_template(template_dict):
                     return self.handle_steps_template_dict(template_dict, obj)
+                elif is_variables_template(template_dict):
+                    return self.handle_variables_template_dict(template_dict, obj)
                 return template_dict
             return None
 
@@ -145,6 +150,33 @@ class YamlResolver:
 
             steps = traverse(steps, resolve_steps)
         return steps
+
+    def handle_variables_template_dict(self, dct, template_reference) -> list:
+        """Resolves variables template yaml from template reference.
+
+        TODO: Breaks on everything that is not a string.
+        """
+        variables = dct.pop("variables")
+        parameters = dct.get("parameters")
+        if parameters:
+            parameter_values = template_reference.get("parameters", {})
+            for parameter in parameters:
+                default = parameter.get("default")
+                if default is not None:
+                    parameter_values.setdefault(parameter["name"], default)
+
+            def resolve_variables(obj):
+                if type(obj) == str:
+                    # TODO: should consider type of parameter
+                    return self.replace_parameters(obj, parameter_values)
+                return None
+
+            variables = traverse(variables, resolve_variables)
+        if isinstance(variables, dict):
+            return [
+                {"name": key, "value": value} for key, value in variables.items()
+            ]
+        return variables
 
     @staticmethod
     def replace_parameters(input: str, parameters: Optional[dict] = None):

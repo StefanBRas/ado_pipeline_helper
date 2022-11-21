@@ -1,0 +1,3 @@
+variables:
+- name: variable_list_simple
+  value: something

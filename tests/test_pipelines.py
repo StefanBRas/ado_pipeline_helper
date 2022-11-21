@@ -9,6 +9,8 @@ def test_preview(client: Client):
 def test_validate(client: Client):
     preview = client.preview()
     validated = client.validate()
-    assert isinstance(preview, Run), preview
-    assert isinstance(validated, Run), (validated, client.load_yaml())
+    with open("tmp.yml", "w") as f:
+        f.write(client.load_yaml())
+    assert isinstance(preview, Run)
+    assert isinstance(validated, Run)
     assert validated.final_yaml == preview.final_yaml

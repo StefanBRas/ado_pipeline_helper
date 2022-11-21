@@ -11,6 +11,12 @@ name: test1
 pool:
   vmImage: ubuntu-latest
 
+variables:
+- template: templates/variables/simple.yml
+- template: templates/variables/simple_list.yml
+- name: some_variable
+  value: some_thing
+
 jobs:
 - job: "simple_job" 
   steps:
