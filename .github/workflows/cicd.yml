@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: CICD
 
 on:
@@ -13,8 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +34,9 @@ jobs:
     - name: Install dev deps
       run: |
         poetry install --only=dev
+    - name: lint
+      run: |
+        make lint
     - name: Nox
       run: |
         poetry run nox
