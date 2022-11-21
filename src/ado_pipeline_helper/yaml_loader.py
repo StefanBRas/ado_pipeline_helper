@@ -54,6 +54,7 @@ def is_steps_template(dct: dict):
 def is_variables_template(dct: dict):
     return "variables" in dct.keys()
 
+
 def is_stages_template(dct: dict):
     return "stages" in dct.keys()
 
