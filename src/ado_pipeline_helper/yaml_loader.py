@@ -87,6 +87,8 @@ class YamlResolver:
     def get_yaml(self) -> str:
         def mod_func(obj):
             if isinstance(obj, dict) and "template" in list(obj.keys()):
+                if "@" in obj['template']:
+                    return None
                 relative_path = obj["template"]
                 template_path = self.pipeline_path.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
