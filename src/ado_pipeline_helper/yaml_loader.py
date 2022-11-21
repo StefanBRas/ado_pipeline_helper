@@ -54,6 +54,9 @@ def is_steps_template(dct: dict):
 def is_variables_template(dct: dict):
     return "variables" in dct.keys()
 
+def is_stages_template(dct: dict):
+    return "stages" in dct.keys()
+
 
 def id_func(obj):
     return obj
@@ -100,6 +103,8 @@ class YamlResolver:
                     return self.handle_steps_template_dict(template_dict, obj)
                 elif is_variables_template(template_dict):
                     return self.handle_variables_template_dict(template_dict, obj)
+                elif is_stages_template(template_dict):
+                    return self.handle_stages_template_dict(template_dict, obj)
                 return template_dict
             return None
 
@@ -153,6 +158,29 @@ class YamlResolver:
 
             steps = traverse(steps, resolve_steps)
         return steps
+
+    def handle_stages_template_dict(self, dct, template_reference) -> dict:
+        """Resolves stages template yaml from template reference.
+
+        TODO: Breaks on everything that is not a string.
+        """
+        stages = dct.pop("stages")
+        parameters = dct.get("parameters")
+        if parameters:
+            parameter_values = template_reference.get("parameters", {})
+            for parameter in parameters:
+                default = parameter.get("default")
+                if default is not None:
+                    parameter_values.setdefault(parameter["name"], default)
+
+            def resolve_stages(obj):
+                if type(obj) == str:
+                    # TODO: should consider type of parameter
+                    return self.replace_parameters(obj, parameter_values)
+                return None
+
+            stages = traverse(stages, resolve_stages)
+        return stages
 
     def handle_variables_template_dict(self, dct, template_reference) -> list:
         """Resolves variables template yaml from template reference.

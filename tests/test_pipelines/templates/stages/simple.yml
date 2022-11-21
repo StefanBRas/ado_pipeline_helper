@@ -1,0 +1,7 @@
+stages:
+- stage: simple_stage_template
+  jobs:
+  - job: simple_stage_template_job
+    steps:
+    - script: echo things
+

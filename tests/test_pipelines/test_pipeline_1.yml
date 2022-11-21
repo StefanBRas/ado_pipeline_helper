@@ -16,20 +16,22 @@ variables:
 - template: templates/variables/simple_list.yml
 - name: some_variable
   value: some_thing
-
-jobs:
-- job: "simple_job" 
-  steps:
-  - script: echo Hello, world!
-    displayName: 'Run a one-line script'
-- template: templates/jobs/simple.yml
-- template: templates/jobs/parameters.yml
-  parameters:
-    parameter1: "value"
-- job: "steps_template" 
-  steps:
-  - template: templates/steps/simple.yml
-  - template: templates/steps/parameters.yml
+stages:
+- stage: some_stage 
+  jobs:
+  - job: "simple_job" 
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
+  - template: templates/jobs/simple.yml
+  - template: templates/jobs/parameters.yml
     parameters:
       parameter1: "value"
+  - job: "steps_template" 
+    steps:
+    - template: templates/steps/simple.yml
+    - template: templates/steps/parameters.yml
+      parameters:
+        parameter1: "value"
+- template: templates/stages/simple.yml
 
