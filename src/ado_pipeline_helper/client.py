@@ -30,6 +30,7 @@ class Client:
         pipeline_path: Path,
         pipeline_id: Optional[int],
         pipeline_name: Optional[str],
+        user: str = "",
     ) -> None:
         self._organization = organization
         self._project = project
@@ -37,6 +38,7 @@ class Client:
         self._pipeline_path = pipeline_path
         self._pipeline_id = pipeline_id
         self._pipeline_name = pipeline_name
+        self._user = user
         self._pipeline_client = self._get_pipeline_client()
 
     @classmethod
@@ -51,7 +53,7 @@ class Client:
             return self._pipeline_id
 
     def _get_pipeline_client(self):
-        credentials = BasicAuthentication("", self._token.get_secret_value())
+        credentials = BasicAuthentication(self._user, self._token.get_secret_value())
         organization_url = f"https://dev.azure.com/{self._organization}"
         connection = Connection(base_url=organization_url, creds=credentials)
         return connection.clients_v6_0.get_pipelines_client()

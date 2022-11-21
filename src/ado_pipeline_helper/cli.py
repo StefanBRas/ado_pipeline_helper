@@ -43,6 +43,7 @@ def _get_client(
     token: str,
     organization: str,
     project: str,
+    user: str,
 ) -> Client:
     if organization and project and path:
         settings = CliSettings(organization=organization, project=project, pipelines={})
@@ -55,7 +56,7 @@ def _get_client(
     else:
         settings = CliSettings.read()
     client_settings = ClientSettings.from_cli_settings(
-        settings, pipeline_local_name, token=SecretStr(token)
+        settings, pipeline_local_name, token=SecretStr(token), user=user
     )
     return Client.from_client_settings(client_settings)
 
@@ -68,10 +69,11 @@ def preview(
     token: str = token_option,
     organization: str = typer.Option(None),
     project: str = typer.Option(None),
+    user: str = typer.Option(""),
 ):
     """Fetch remote pipeline yaml as a single file."""
     client = _get_client(
-        path, pipeline_id, pipeline_local_name, token, organization, project
+        path, pipeline_id, pipeline_local_name, token, organization, project, user
     )
     try:
         run = client.preview()
@@ -89,10 +91,11 @@ def validate(
     token: str = token_option,
     organization: str = typer.Option(None),
     project: str = typer.Option(None),
+    user: str = typer.Option(""),
 ):
     """Check current local pipeline for errors."""
     client = _get_client(
-        path, pipeline_id, pipeline_local_name, token, organization, project
+        path, pipeline_id, pipeline_local_name, token, organization, project, user=user
     )
     try:
         run = client.validate()

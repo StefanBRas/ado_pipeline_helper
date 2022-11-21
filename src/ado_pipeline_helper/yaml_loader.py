@@ -50,6 +50,7 @@ def is_jobs_template(dct: dict):
 def is_steps_template(dct: dict):
     return "steps" in dct.keys()
 
+
 def is_variables_template(dct: dict):
     return "variables" in dct.keys()
 
@@ -87,7 +88,7 @@ class YamlResolver:
     def get_yaml(self) -> str:
         def mod_func(obj):
             if isinstance(obj, dict) and "template" in list(obj.keys()):
-                if "@" in obj['template']:
+                if "@" in obj["template"]:
                     return None
                 relative_path = obj["template"]
                 template_path = self.pipeline_path.parent.joinpath(relative_path)
@@ -175,9 +176,7 @@ class YamlResolver:
 
             variables = traverse(variables, resolve_variables)
         if isinstance(variables, dict):
-            return [
-                {"name": key, "value": value} for key, value in variables.items()
-            ]
+            return [{"name": key, "value": value} for key, value in variables.items()]
         return variables
 
     @staticmethod

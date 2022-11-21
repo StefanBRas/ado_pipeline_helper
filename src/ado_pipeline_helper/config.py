@@ -69,10 +69,15 @@ class ClientSettings(BaseModel):
     pipeline_name: Optional[
         str
     ]  # TODO maybe add validator one of this two fields must be set
+    user: str = ""
 
     @classmethod
     def from_cli_settings(
-        cls, settings: CliSettings, pipeline_local_name: str, token: SecretStr
+        cls,
+        settings: CliSettings,
+        pipeline_local_name: str,
+        token: SecretStr,
+        user: str = "",
     ) -> "ClientSettings":
         pipeline = settings.pipelines[pipeline_local_name]
         return cls(
@@ -82,4 +87,5 @@ class ClientSettings(BaseModel):
             pipeline_id=pipeline.id,
             pipeline_name=pipeline.name,
             token=token,
+            user=user,
         )
