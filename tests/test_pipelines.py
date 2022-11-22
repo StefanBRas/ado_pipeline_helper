@@ -19,6 +19,7 @@ def test_preview(get_client: Callable[..., Client], id_, path):
 def test_validate(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
     preview = client.preview()
+    print(preview.final_yaml)
     validated = client.validate()
     with open("tmp.yml", "w") as f:
         f.write(client.load_yaml())

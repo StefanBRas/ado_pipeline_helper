@@ -8,9 +8,6 @@ import os
 
 # test_pipeline_dir = Path(__file__).parent.joinpath("test_pipelines")
 # pipelines =  test_pipeline_dir.glob("test_pipeline_*.yml")
-TEST_PIPELINES = [
-    (3, Path("tests/test_pipelines/test_pipeline_1.yml"))
-]
 
 @pytest.fixture
 def client():
