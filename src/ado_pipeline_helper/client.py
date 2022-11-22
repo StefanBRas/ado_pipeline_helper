@@ -52,6 +52,13 @@ class Client:
         else:
             return self._pipeline_id
 
+    @property
+    def pipeline_name(self) -> int:
+        if self._pipeline_id is None:
+            return self._get_pipeline_id()
+        else:
+            return self._pipeline_id
+
     def _get_pipeline_client(self):
         credentials = BasicAuthentication(self._user, self._token.get_secret_value())
         organization_url = f"https://dev.azure.com/{self._organization}"

@@ -1,12 +1,22 @@
 from ado_pipeline_helper.client import Client, Run
+from pathlib import Path
+from typing import Callable
+import pytest
 
+TEST_PIPELINES = [
+    (3, Path("tests/test_pipelines/test_pipeline_1.yml"))
+]
 
-def test_preview(client: Client):
+@pytest.mark.parametrize('id_,path', TEST_PIPELINES)
+def test_preview(get_client: Callable[..., Client], id_, path):
+    client = get_client(id_, path)
     preview = client.preview()
     assert isinstance(preview, Run)
 
 
-def test_validate(client: Client):
+@pytest.mark.parametrize('id_,path', TEST_PIPELINES)
+def test_validate(get_client: Callable[..., Client], id_, path):
+    client = get_client(id_, path)
     preview = client.preview()
     validated = client.validate()
     with open("tmp.yml", "w") as f:
