@@ -28,6 +28,8 @@ class Parameters(BaseModel):
 
 
 class MyYAML(YAML):
+    """wrapper so we can dump to a string."""
+
     def dump(self, data, stream=None, **kw):
         inefficient = False
         if stream is None:
@@ -42,31 +44,13 @@ yaml = MyYAML()
 yaml.preserve_quotes = True  # type:ignore
 unordered_yaml = MyYAML(typ="safe")
 
-
-def is_jobs_template(dct: dict):
-    return "jobs" in dct.keys()
-
-
-def is_steps_template(dct: dict):
-    return "steps" in dct.keys()
-
-
-def is_variables_template(dct: dict):
-    return "variables" in dct.keys()
-
-
-def is_stages_template(dct: dict):
-    return "stages" in dct.keys()
-
-
-def id_func(obj):
-    return obj
+TemplateTypes = Literal["stages", "jobs", "steps", "variables"]
 
 
 T = TypeVar("T")
 
 
-def traverse(obj: T, mod_func=id_func) -> T:
+def traverse(obj: T, mod_func=lambda x: x) -> T:
     if (result := mod_func(obj)) is not None:
         return result
     if isinstance(obj, list):
@@ -98,22 +82,22 @@ class YamlResolver:
                 template_path = self.pipeline_path.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
-                if is_jobs_template(template_dict):
+                if self._is_jobs_template(template_dict):
                     return self.handle_jobs_template_dict(template_dict, obj)
-                elif is_steps_template(template_dict):
+                elif self._is_steps_template(template_dict):
                     return self.handle_steps_template_dict(template_dict, obj)
-                elif is_variables_template(template_dict):
+                elif self._is_variables_template(template_dict):
                     return self.handle_variables_template_dict(template_dict, obj)
-                elif is_stages_template(template_dict):
+                elif self._is_stages_template(template_dict):
                     return self.handle_stages_template_dict(template_dict, obj)
                 return template_dict
             return None
 
         yaml_resolved = traverse(self.pipeline, mod_func)
         return str(yaml.dump(yaml_resolved))
-    
+
     def _handle_parameters(self, template_items, template_reference, parameters):
-        """ Substitutes parameters into the template.
+        """Substitutes parameters into the template.
         TODO: Breaks on variables that are not strings.
         """
         parameter_values = template_reference.get("parameters", {})
@@ -123,35 +107,49 @@ class YamlResolver:
                 parameter_values.setdefault(parameter["name"], default)
 
         def resolve_steps(obj):
+            """replace parameter template syntax with the actual value"""
             if type(obj) == str:
                 # TODO: should consider type of parameter
                 return self.replace_parameters(obj, parameter_values)
             return None
+
         return traverse(template_items, resolve_steps)
 
-    def _handle_template(self, dct, template_reference, key: Literal['stages','jobs', 'steps', 'variables']) -> dict:
-        """Resolves jobs template yaml from template reference.
+    @staticmethod
+    def _is_jobs_template(dct: dict):
+        return "jobs" in dct.keys()
 
-        """
+    @staticmethod
+    def _is_steps_template(dct: dict):
+        return "steps" in dct.keys()
+
+    @staticmethod
+    def _is_variables_template(dct: dict):
+        return "variables" in dct.keys()
+
+    @staticmethod
+    def _is_stages_template(dct: dict):
+        return "stages" in dct.keys()
+
+    def _handle_template(self, dct, template_reference, key: TemplateTypes) -> dict:
+        """Resolves jobs template yaml from template reference."""
         template_items = dct.pop(key)
         parameters = dct.get("parameters")
         if parameters:
-            template_items = self._handle_parameters(template_items, template_reference, parameters)
+            template_items = self._handle_parameters(
+                template_items, template_reference, parameters
+            )
         return template_items
 
-
     def handle_jobs_template_dict(self, dct, template_reference) -> dict:
-        """Resolves jobs template yaml from template reference.
-        """
+        """Resolves jobs template yaml from template reference."""
 
-        jobs = self._handle_template(dct, template_reference, 'jobs')
+        jobs = self._handle_template(dct, template_reference, "jobs")
         return jobs
 
     def handle_steps_template_dict(self, dct, template_reference) -> dict:
-        """Resolves steps template yaml from template reference.
-
-        """
-        steps = self._handle_template(dct, template_reference, 'steps')
+        """Resolves steps template yaml from template reference."""
+        steps = self._handle_template(dct, template_reference, "steps")
         return steps
 
     def handle_stages_template_dict(self, dct, template_reference) -> dict:
@@ -159,7 +157,7 @@ class YamlResolver:
 
         TODO: Breaks on everything that is not a string.
         """
-        stages = self._handle_template(dct, template_reference, 'stages')
+        stages = self._handle_template(dct, template_reference, "stages")
         return stages
 
     def handle_variables_template_dict(self, dct, template_reference) -> list:
@@ -171,7 +169,7 @@ class YamlResolver:
         Maybe this is not true and they can be mixed.
 
         """
-        variables = self._handle_template(dct, template_reference, 'variables')
+        variables = self._handle_template(dct, template_reference, "variables")
         if isinstance(variables, dict):
             return [{"name": key, "value": value} for key, value in variables.items()]
         return variables
