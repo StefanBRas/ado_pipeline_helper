@@ -8,7 +8,7 @@ name: test2extends
 extends:
   template: templates/stages/complex.yml
   parameters:
-    jobs:  
+    buildSteps:  
       - bash: echo Test 
         displayName: succeed
       - bash: echo "Test"
