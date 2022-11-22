@@ -4,7 +4,8 @@ from typing import Callable
 import pytest
 
 TEST_PIPELINES = [
-    (3, Path("tests/test_pipelines/test_pipeline_1.yml"))
+    (3, Path("tests/test_pipelines/test_pipeline_1.yml")),
+    (4, Path("tests/test_pipelines/test_pipeline_2_extends.yml"))
 ]
 
 @pytest.mark.parametrize('id_,path', TEST_PIPELINES)
