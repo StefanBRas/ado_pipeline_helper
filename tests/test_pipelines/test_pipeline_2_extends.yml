@@ -6,7 +6,7 @@ trigger:
 name: test2extends
 
 extends:
-  template: templates/jobs/complex.yml
+  template: templates/stages/complex.yml
   parameters:
     jobs:  
       - bash: echo Test 
