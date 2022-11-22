@@ -1,3 +1,6 @@
+"""
+https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters?view=azure-devops&tabs=script#parameter-data-types
+"""
 from typing import Literal, Mapping, Optional, Any, Union
 
 from pydantic import BaseModel
