@@ -6,15 +6,11 @@ trigger:
 name: test2extends
 
 extends:
-  template: templates/stages/complex.yml
+  template: templates/jobs/complex.yml
   parameters:
-    buildSteps:  
-      - bash: echo Test #Passes
+    jobs:  
+      - bash: echo Test 
         displayName: succeed
       - bash: echo "Test"
         displayName: succeed
-      - task: CmdLine@2
-        inputs:
-          script: echo "Script Test"
-      - script: echo "Script Test"
 
