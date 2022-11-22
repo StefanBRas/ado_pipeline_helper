@@ -111,53 +111,47 @@ class YamlResolver:
 
         yaml_resolved = traverse(self.pipeline, mod_func)
         return str(yaml.dump(yaml_resolved))
+    
+    def _handle_parameters(self, template_items, template_reference, parameters):
+        """ Substitutes parameters into the template.
+        TODO: Breaks on variables that are not strings.
+        """
+        parameter_values = template_reference.get("parameters", {})
+        for parameter in parameters:
+            default = parameter.get("default")
+            if default is not None:
+                parameter_values.setdefault(parameter["name"], default)
+
+        def resolve_steps(obj):
+            if type(obj) == str:
+                # TODO: should consider type of parameter
+                return self.replace_parameters(obj, parameter_values)
+            return None
+        return traverse(template_items, resolve_steps)
+
+    def _handle_template(self, dct, template_reference, key: Literal['stages','jobs', 'steps', 'variables']) -> dict:
+        """Resolves jobs template yaml from template reference.
+
+        """
+        template_items = dct.pop(key)
+        parameters = dct.get("parameters")
+        if parameters:
+            template_items = self._handle_parameters(template_items, template_reference, parameters)
+        return template_items
+
 
     def handle_jobs_template_dict(self, dct, template_reference) -> dict:
         """Resolves jobs template yaml from template reference.
-
-        TODO: Breaks on everything that is not a string.
-
-        TODO: getting the parameters should be split into it's own function
         """
-        jobs = dct.pop("jobs")
-        parameters = dct.get("parameters")
-        if parameters:
-            parameter_values = template_reference.get("parameters", {})
-            for parameter in parameters:
-                default = parameter.get("default")
-                if default is not None:
-                    parameter_values.setdefault(parameter["name"], default)
 
-            def resolve_steps(obj):
-                if type(obj) == str:
-                    # TODO: should consider type of parameter
-                    return self.replace_parameters(obj, parameter_values)
-                return None
-
-            jobs = traverse(jobs, resolve_steps)
+        jobs = self._handle_template(dct, template_reference, 'jobs')
         return jobs
 
     def handle_steps_template_dict(self, dct, template_reference) -> dict:
         """Resolves steps template yaml from template reference.
 
-        TODO: Breaks on everything that is not a string.
         """
-        steps = dct.pop("steps")
-        parameters = dct.get("parameters")
-        if parameters:
-            parameter_values = template_reference.get("parameters", {})
-            for parameter in parameters:
-                default = parameter.get("default")
-                if default is not None:
-                    parameter_values.setdefault(parameter["name"], default)
-
-            def resolve_steps(obj):
-                if type(obj) == str:
-                    # TODO: should consider type of parameter
-                    return self.replace_parameters(obj, parameter_values)
-                return None
-
-            steps = traverse(steps, resolve_steps)
+        steps = self._handle_template(dct, template_reference, 'steps')
         return steps
 
     def handle_stages_template_dict(self, dct, template_reference) -> dict:
@@ -165,45 +159,19 @@ class YamlResolver:
 
         TODO: Breaks on everything that is not a string.
         """
-        stages = dct.pop("stages")
-        parameters = dct.get("parameters")
-        if parameters:
-            parameter_values = template_reference.get("parameters", {})
-            for parameter in parameters:
-                default = parameter.get("default")
-                if default is not None:
-                    parameter_values.setdefault(parameter["name"], default)
-
-            def resolve_stages(obj):
-                if type(obj) == str:
-                    # TODO: should consider type of parameter
-                    return self.replace_parameters(obj, parameter_values)
-                return None
-
-            stages = traverse(stages, resolve_stages)
+        stages = self._handle_template(dct, template_reference, 'stages')
         return stages
 
     def handle_variables_template_dict(self, dct, template_reference) -> list:
         """Resolves variables template yaml from template reference.
 
-        TODO: Breaks on everything that is not a string.
+        Assumes that variables are either a short-form dict with
+        name-value or the list form of name-value-type-default dicts.
+
+        Maybe this is not true and they can be mixed.
+
         """
-        variables = dct.pop("variables")
-        parameters = dct.get("parameters")
-        if parameters:
-            parameter_values = template_reference.get("parameters", {})
-            for parameter in parameters:
-                default = parameter.get("default")
-                if default is not None:
-                    parameter_values.setdefault(parameter["name"], default)
-
-            def resolve_variables(obj):
-                if type(obj) == str:
-                    # TODO: should consider type of parameter
-                    return self.replace_parameters(obj, parameter_values)
-                return None
-
-            variables = traverse(variables, resolve_variables)
+        variables = self._handle_template(dct, template_reference, 'variables')
         if isinstance(variables, dict):
             return [{"name": key, "value": value} for key, value in variables.items()]
         return variables
