@@ -6,11 +6,7 @@ trigger:
 name: test2extends
 
 extends:
-  template: templates/stages/complex.yml
+  template: templates/stages/simple_parameter.yml
   parameters:
-    buildSteps:  
-      - bash: echo Test 
-        displayName: succeed
-      - bash: echo "Test"
-        displayName: succeed
+    parameter_stage: "value"
 

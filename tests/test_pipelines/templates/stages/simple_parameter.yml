@@ -1,0 +1,10 @@
+parameters:
+- name: parameter_stage
+  default: default_value
+
+stages:
+- stage: simple_stage_template
+  jobs:
+  - job: simple_stage_template_job
+    steps:
+    - script: echo ${{ parameters.parameter_stage }}

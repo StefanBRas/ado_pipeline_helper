@@ -31,4 +31,7 @@ stages:
       parameters:
         parameter1: "value"
 - template: templates/stages/simple.yml
+- template: templates/stages/simple_parameter.yml
+  parameters:
+    parameter_stage: "value"
 
