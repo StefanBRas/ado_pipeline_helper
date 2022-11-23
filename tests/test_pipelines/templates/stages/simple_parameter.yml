@@ -3,7 +3,7 @@ parameters:
   default: default_value
 
 stages:
-- stage: simple_stage_template
+- stage: simple_stage_template_parameter
   jobs:
   - job: simple_stage_template_job
     steps:
