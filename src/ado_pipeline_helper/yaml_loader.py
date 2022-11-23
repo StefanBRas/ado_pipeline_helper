@@ -1,31 +1,14 @@
+from collections.abc import Callable
+from dataclasses import dataclass
 import re
 from io import StringIO
 from pathlib import Path
-from typing import Literal, Optional, OrderedDict, TypeVar
+from typing import Any, Literal, Optional, OrderedDict, TypeVar
 
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 
-from ado_pipeline_helper.utils import listify
-
-
-class Parameter(BaseModel):
-    name: str
-    default: Optional[str]
-    type: Literal["boolean", "string"]
-
-
-class Parameters(BaseModel):
-    __root__: Parameter
-
-    @classmethod
-    def from_parameter_dict(cls):
-        """
-        TODO finish this
-
-        """
-        pass
-
+from ado_pipeline_helper.utils import listify, set_if_not_none
 
 class MyYAML(YAML):
     """wrapper so we can dump to a string."""
@@ -47,12 +30,17 @@ unordered_yaml = MyYAML(typ="safe")
 TemplateTypes = Literal["stages", "jobs", "steps", "variables"]
 
 
-T = TypeVar("T")
+@dataclass()
+class TraversalResult:
+    has_change: bool
+    val: Any
 
 
-def traverse(obj: T, mod_func=lambda x: x) -> T:
-    if (result := mod_func(obj)) is not None:
-        return result
+def traverse(obj, mod_func: Callable[..., TraversalResult]=lambda x: TraversalResult(has_change=False, val=x)) :
+    mod_func_result = mod_func(obj)
+    if mod_func_result.has_change:
+        return traverse(mod_func_result.val, mod_func)
+    result = mod_func_result.val
     if isinstance(obj, list):
         new_list = []
         for val in obj:
@@ -66,6 +54,8 @@ def traverse(obj: T, mod_func=lambda x: x) -> T:
         return obj
     return obj
 
+class YamlResolveError(Exception):
+    pass
 
 class YamlResolver:
     def __init__(self, pipeline_path: Path) -> None:
@@ -74,44 +64,66 @@ class YamlResolver:
         self.pipeline: OrderedDict = yaml.load(content)
 
     def get_yaml(self) -> str:
-        def mod_func(obj):
-            if isinstance(obj, dict) and "template" in list(obj.keys()):
-                if "@" in obj["template"]:
-                    return None
+        def mod_func(obj) -> TraversalResult:
+            # is extend template
+            if isinstance(obj, dict) and "extends" in obj:
+                extend_node = obj['extends']
+                relative_path = extend_node["template"]
+                if "@" in relative_path:
+                    return TraversalResult(False, obj)
+                template_path = self.pipeline_path.parent.joinpath(relative_path)
+                template_content = template_path.read_text()
+                template_dict = yaml.load(template_content)
+                new_obj = {'template': relative_path}
+                new_obj = set_if_not_none(new_obj, 'parameters', extend_node.get('parameters'))
+                if self._is_jobs_template(template_dict):
+                    obj['jobs'] = [new_obj]
+                elif self._is_steps_template(template_dict):
+                    obj['steps'] = [new_obj]
+                elif self._is_stages_template(template_dict):
+                    obj['stages'] = [new_obj]
+                else:
+                    raise YamlResolveError('Can only extend from step, job or stage template.')
+                del obj['extends']
+                print(obj)
+                return TraversalResult(True, obj)
+            # is a template reference
+            if isinstance(obj, dict) and "template" in obj:
                 relative_path = obj["template"]
+                if "@" in relative_path:
+                    return TraversalResult(False, obj)
                 template_path = self.pipeline_path.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
                 if self._is_jobs_template(template_dict):
-                    return self.handle_jobs_template_dict(template_dict, obj)
+                    return TraversalResult(True, self.handle_jobs_template_dict(template_dict, obj))
                 elif self._is_steps_template(template_dict):
-                    return self.handle_steps_template_dict(template_dict, obj)
+                    return TraversalResult(True, self.handle_steps_template_dict(template_dict, obj))
                 elif self._is_variables_template(template_dict):
-                    return self.handle_variables_template_dict(template_dict, obj)
+                    return TraversalResult(True, self.handle_variables_template_dict(template_dict, obj))
                 elif self._is_stages_template(template_dict):
-                    return self.handle_stages_template_dict(template_dict, obj)
-                return template_dict
-            return None
+                    return TraversalResult(True, self.handle_stages_template_dict(template_dict, obj))
+                else:
+                    raise YamlResolveError('Unsupported template type.')
+            return TraversalResult(False, obj)
 
         yaml_resolved = traverse(self.pipeline, mod_func)
         return str(yaml.dump(yaml_resolved))
 
-    def _handle_parameters(self, template_items, template_reference, parameters):
+    def _handle_parameters(self, template_items, input_parameters:dict, parameters: list[dict]):
         """Substitutes parameters into the template.
         TODO: Breaks on variables that are not strings.
         """
-        parameter_values = template_reference.get("parameters", {})
-        for parameter in parameters:
-            default = parameter.get("default")
-            if default is not None:
-                parameter_values.setdefault(parameter["name"], default)
-
-        def resolve_steps(obj):
+        resolved_parameters = {p['name']: p.get('default') for p in parameters} | input_parameters
+        def resolve_steps(obj) -> TraversalResult:
             """replace parameter template syntax with the actual value"""
             if type(obj) == str:
                 # TODO: should consider type of parameter
-                return self.replace_parameters(obj, parameter_values)
-            return None
+                replaced_string = self.replace_parameters(obj, resolved_parameters)
+                if obj == replaced_string:
+                    return TraversalResult(False, replaced_string)
+                return TraversalResult(True, replaced_string)
+            return TraversalResult(False, obj)
 
         return traverse(template_items, resolve_steps)
 
@@ -137,7 +149,7 @@ class YamlResolver:
         parameters = dct.get("parameters")
         if parameters:
             template_items = self._handle_parameters(
-                template_items, template_reference, parameters
+                template_items, template_reference.get('parameters', {}), parameters
             )
         return template_items
 
@@ -155,7 +167,6 @@ class YamlResolver:
     def handle_stages_template_dict(self, dct, template_reference) -> dict:
         """Resolves stages template yaml from template reference.
 
-        TODO: Breaks on everything that is not a string.
         """
         stages = self._handle_template(dct, template_reference, "stages")
         return stages

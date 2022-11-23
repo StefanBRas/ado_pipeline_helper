@@ -9,3 +9,7 @@ None of these are implemented mind you as of now
 - validate library groups (see if value exists)
 - MAYBE: validate schedule cron
 - Warning about templating syntax errors (like missing $ before {{ }} )
+
+## Useful links
+
+- [ADO Yaml Reference](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines)
