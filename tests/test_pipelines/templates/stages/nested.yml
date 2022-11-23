@@ -1,0 +1,5 @@
+stages:
+- stage: simple_stage_nested
+  jobs:
+  - template: templates/jobs/nested.yml
+

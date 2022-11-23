@@ -1,0 +1,5 @@
+jobs:
+- job: simple_job_template_nested
+  steps:
+  - template: template/steps/simple.yml
+
