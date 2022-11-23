@@ -8,6 +8,7 @@ from ado_pipeline_helper.client import Client, Run
 TEST_PIPELINES = [
     (Path("tests/test_pipelines/test_pipeline_1.yml"), 3),
     (Path("tests/test_pipelines/test_pipeline_2_extends.yml"), 4),
+    (Path("tests/test_pipelines/test_pipeline_3_nested_templates.yml"), 7),
 ]
 
 
