@@ -9,6 +9,7 @@ def listify(obj) -> list:
     """
     return obj if isinstance(obj, list) else [obj]
 
+
 def set_if_not_none(obj: dict, key: str, val: Any) -> dict:
     if val is not None:
         obj[key] = val

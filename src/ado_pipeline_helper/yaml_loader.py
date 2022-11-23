@@ -1,14 +1,14 @@
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
-import re
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal, Optional, OrderedDict, TypeVar
+from typing import Any, Literal, Optional, OrderedDict
 
-from pydantic import BaseModel
 from ruamel.yaml import YAML
 
 from ado_pipeline_helper.utils import listify, set_if_not_none
+
 
 class MyYAML(YAML):
     """wrapper so we can dump to a string."""
@@ -36,7 +36,12 @@ class TraversalResult:
     val: Any
 
 
-def traverse(obj, mod_func: Callable[..., TraversalResult]=lambda x: TraversalResult(has_change=False, val=x)) :
+def traverse(
+    obj,
+    mod_func: Callable[..., TraversalResult] = lambda x: TraversalResult(
+        has_change=False, val=x
+    ),
+):
     mod_func_result = mod_func(obj)
     if mod_func_result.has_change:
         return traverse(mod_func_result.val, mod_func)
@@ -54,8 +59,10 @@ def traverse(obj, mod_func: Callable[..., TraversalResult]=lambda x: TraversalRe
         return obj
     return obj
 
+
 class YamlResolveError(Exception):
     pass
+
 
 class YamlResolver:
     def __init__(self, pipeline_path: Path) -> None:
@@ -67,24 +74,28 @@ class YamlResolver:
         def mod_func(obj) -> TraversalResult:
             # is extend template
             if isinstance(obj, dict) and "extends" in obj:
-                extend_node = obj['extends']
+                extend_node = obj["extends"]
                 relative_path = extend_node["template"]
                 if "@" in relative_path:
                     return TraversalResult(False, obj)
                 template_path = self.pipeline_path.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
-                new_obj = {'template': relative_path}
-                new_obj = set_if_not_none(new_obj, 'parameters', extend_node.get('parameters'))
+                new_obj = {"template": relative_path}
+                new_obj = set_if_not_none(
+                    new_obj, "parameters", extend_node.get("parameters")
+                )
                 if self._is_jobs_template(template_dict):
-                    obj['jobs'] = [new_obj]
+                    obj["jobs"] = [new_obj]
                 elif self._is_steps_template(template_dict):
-                    obj['steps'] = [new_obj]
+                    obj["steps"] = [new_obj]
                 elif self._is_stages_template(template_dict):
-                    obj['stages'] = [new_obj]
+                    obj["stages"] = [new_obj]
                 else:
-                    raise YamlResolveError('Can only extend from step, job or stage template.')
-                del obj['extends']
+                    raise YamlResolveError(
+                        "Can only extend from step, job or stage template."
+                    )
+                del obj["extends"]
                 print(obj)
                 return TraversalResult(True, obj)
             # is a template reference
@@ -96,25 +107,38 @@ class YamlResolver:
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
                 if self._is_jobs_template(template_dict):
-                    return TraversalResult(True, self.handle_jobs_template_dict(template_dict, obj))
+                    return TraversalResult(
+                        True, self.handle_jobs_template_dict(template_dict, obj)
+                    )
                 elif self._is_steps_template(template_dict):
-                    return TraversalResult(True, self.handle_steps_template_dict(template_dict, obj))
+                    return TraversalResult(
+                        True, self.handle_steps_template_dict(template_dict, obj)
+                    )
                 elif self._is_variables_template(template_dict):
-                    return TraversalResult(True, self.handle_variables_template_dict(template_dict, obj))
+                    return TraversalResult(
+                        True, self.handle_variables_template_dict(template_dict, obj)
+                    )
                 elif self._is_stages_template(template_dict):
-                    return TraversalResult(True, self.handle_stages_template_dict(template_dict, obj))
+                    return TraversalResult(
+                        True, self.handle_stages_template_dict(template_dict, obj)
+                    )
                 else:
-                    raise YamlResolveError('Unsupported template type.')
+                    raise YamlResolveError("Unsupported template type.")
             return TraversalResult(False, obj)
 
         yaml_resolved = traverse(self.pipeline, mod_func)
         return str(yaml.dump(yaml_resolved))
 
-    def _handle_parameters(self, template_items, input_parameters:dict, parameters: list[dict]):
+    def _handle_parameters(
+        self, template_items, input_parameters: dict, parameters: list[dict]
+    ):
         """Substitutes parameters into the template.
         TODO: Breaks on variables that are not strings.
         """
-        resolved_parameters = {p['name']: p.get('default') for p in parameters} | input_parameters
+        resolved_parameters = {
+            p["name"]: p.get("default") for p in parameters
+        } | input_parameters
+
         def resolve_steps(obj) -> TraversalResult:
             """replace parameter template syntax with the actual value"""
             if type(obj) == str:
@@ -149,7 +173,7 @@ class YamlResolver:
         parameters = dct.get("parameters")
         if parameters:
             template_items = self._handle_parameters(
-                template_items, template_reference.get('parameters', {}), parameters
+                template_items, template_reference.get("parameters", {}), parameters
             )
         return template_items
 
@@ -165,9 +189,7 @@ class YamlResolver:
         return steps
 
     def handle_stages_template_dict(self, dct, template_reference) -> dict:
-        """Resolves stages template yaml from template reference.
-
-        """
+        """Resolves stages template yaml from template reference."""
         stages = self._handle_template(dct, template_reference, "stages")
         return stages
 
