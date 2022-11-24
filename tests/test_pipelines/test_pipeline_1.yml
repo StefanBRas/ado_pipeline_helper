@@ -13,6 +13,7 @@ variables:
 - template: templates/variables/simple_list.yml
 - name: some_variable
   value: some_thing
+
 stages:
 - stage: some_stage 
   jobs:

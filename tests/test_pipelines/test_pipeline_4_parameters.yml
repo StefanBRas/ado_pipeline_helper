@@ -1,0 +1,35 @@
+trigger:
+- branch_that_does_not_exist 
+
+name: test4parameters
+
+stages:
+- template: templates/stages/many_parameters.yml
+  parameters:
+    myString: a string
+    myMultiString: default
+    myNumber: 2
+    myBoolean: true
+    myObject:
+      foo: FOO
+      bar: BAR
+      things:
+      - one
+      - two
+      - three
+      nested:
+        one: apple
+        two: pear
+        count: 3
+    myStep:
+      script: echo my step
+    mySteplist:
+      - script: echo step one
+      - script: echo step two
+    myjob: a
+    myjoblist: a
+    mystage: a
+    stage: a
+    mystagelist: a
+    stageList: a
+
