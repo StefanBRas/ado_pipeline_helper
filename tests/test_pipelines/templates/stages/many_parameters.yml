@@ -68,7 +68,7 @@ stages:
       - script: echo ${{ parameters.myMultiString }}
       - script: echo ${{ parameters.myNumber }}
       - script: echo ${{ parameters.myNumber }}
-      - script: echo ${{ parameters.myBoolean }}
+      - script: echo ${{ parameters.myBoolean }} also, you would think this would be lowercase true but nope its True
       - script: echo multiple parm in one ${{ parameters.myString }} ${{ parameters.myString }}
 - ${{ parameters.mystage }}
 

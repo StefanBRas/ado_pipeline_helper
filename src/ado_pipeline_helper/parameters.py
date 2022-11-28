@@ -52,9 +52,9 @@ class BooleanParameter(BaseParameter):
         if val is None:
             return None
         elif val:
-            return 'true'
+            return 'True'
         else:
-            return 'false'
+            return 'False'
 
     def sub(self, input: bool | None, obj):
         return self._strsub(
