@@ -56,9 +56,11 @@ parameters:
 stages: 
 - stage: many_parameters_stage
   jobs:
+  - ${{ parameters.myjob }}
   - job: stepList
     steps: ${{ parameters.mySteplist }}
   - job: myStep
     steps:
       - ${{ parameters.myStep }}
+- ${{ parameters.mystage }}
 

@@ -21,7 +21,6 @@ def client():
         token=SecretStr(personal_access_token),
         pipeline_id=None,
         pipeline_path=Path("tests/test_pipelines/test_pipeline_1.yml"),
-        pipeline_name=None,
     )
     yield Client.from_client_settings(settings)
 
@@ -37,7 +36,6 @@ def get_client():
             token=SecretStr(personal_access_token),
             pipeline_id=id_,
             pipeline_path=path,
-            pipeline_name=None,
         )
         return Client.from_client_settings(settings)
 
