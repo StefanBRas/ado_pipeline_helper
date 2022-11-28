@@ -37,11 +37,12 @@ stages:
           - script: echo step one
           - script: echo step two
     mystage:
-      - jobs:
-        - job: myjoblist
-          steps:
-          - script: echo step one
-          - script: echo step two
+      stage: mystage
+      jobs:
+      - job: myjoblist
+        steps:
+        - script: echo step one
+        - script: echo step two
     mystagelist:
       - stage: stagelist
         jobs:
