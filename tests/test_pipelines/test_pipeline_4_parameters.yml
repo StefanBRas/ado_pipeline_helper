@@ -27,6 +27,7 @@ stages:
       - script: echo step one
       - script: echo step two
     myjob:
+      job: myjob
       steps:
       - script: echo step one
       - script: echo step two
