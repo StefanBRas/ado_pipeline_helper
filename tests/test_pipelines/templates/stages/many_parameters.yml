@@ -44,16 +44,38 @@ parameters:
   default:
     - script: echo step one
     - script: echo step two
-
 - name: myjob
   type: job
+  default:
+    job: myjobdefault
+    steps:
+    - script: echo step one
+    - script: echo step two
 - name: myjoblist
   type: jobList
-
+  default:
+    - job: myjoblist_default
+      steps:
+        - script: echo step one
+        - script: echo step two
 - name: mystage
   type: stage
+  default:
+    stage: mystage_default
+    jobs:
+    - job: myjoblist_default_stage
+      steps:
+      - script: echo step one
+      - script: echo step two
 - name: mystagelist
   type: stageList
+  default:
+    - stage: stagelist_default
+      jobs:
+      - job: stage_list_myjoblist_default
+        steps:
+        - script: echo step one
+        - script: echo step two
 
 stages: 
 - stage: many_parameters_stage_${{ parameters.somestring }}
