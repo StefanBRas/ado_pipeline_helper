@@ -76,14 +76,13 @@ class Client:
 
     def _get_pipeline_name(self) -> str:
         content = yaml.load(self._pipeline_path.read_text())
-        return content.get('name')
+        return content.get("name")
 
     def _get_pipeline_client(self):
         credentials = BasicAuthentication(self._user, self._token.get_secret_value())
         organization_url = f"https://dev.azure.com/{self._organization}"
         connection = Connection(base_url=organization_url, creds=credentials)
         return connection.clients_v6_0.get_pipelines_client()
-
 
     def load_yaml(self) -> str:
         resolver = YamlResolver(self._pipeline_path)

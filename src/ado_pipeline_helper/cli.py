@@ -4,7 +4,6 @@ from typing import Optional
 import typer
 from azure.devops.exceptions import AzureDevOpsServiceError
 from pydantic import SecretStr
- 
 from rich import print
 
 from ado_pipeline_helper.client import Client
@@ -20,6 +19,7 @@ cli = typer.Typer()
 
 token_option = typer.Option(..., envvar=TOKEN_ENV_VAR)
 
+
 def _get_client(
     path: Path,
     pipeline_id: Optional[int],
@@ -32,13 +32,16 @@ def _get_client(
     pipeline_settings_from_file = settings_from_config_file.pipelines.get(path)
     if pipeline_settings_from_file is not None:
         pipeline_id = pipeline_id or pipeline_settings_from_file.id
-    client_settings = ClientSettings.parse_obj({
-                                 "organization": organization or settings_from_config_file.organization,
-                                 "project": project or settings_from_config_file.project,
-                                 "pipeline_id ":  pipeline_id,
-                                 "pipeline_path": path,
-                                 "token": SecretStr(token),
-                                 "user": user })
+    client_settings = ClientSettings.parse_obj(
+        {
+            "organization": organization or settings_from_config_file.organization,
+            "project": project or settings_from_config_file.project,
+            "pipeline_id ": pipeline_id,
+            "pipeline_path": path,
+            "token": SecretStr(token),
+            "user": user,
+        }
+    )
     return Client.from_client_settings(client_settings)
 
 
@@ -52,9 +55,7 @@ def preview(
     user: str = typer.Option(""),
 ):
     """Fetch remote pipeline yaml as a single file."""
-    client = _get_client(
-        path, pipeline_id, token, organization, project, user
-    )
+    client = _get_client(path, pipeline_id, token, organization, project, user)
     try:
         run = client.preview()
         print(run.final_yaml)
@@ -73,15 +74,14 @@ def validate(
     user: str = typer.Option(""),
 ):
     """Check current local pipeline for errors."""
-    client = _get_client(
-        path, pipeline_id, token, organization, project, user=user
-    )
+    client = _get_client(path, pipeline_id, token, organization, project, user=user)
     try:
         run = client.validate()
         print(run.final_yaml)
     except AzureDevOpsServiceError as e:
         print(e.message)
         raise typer.Exit(code=1)
+
 
 if __name__ == "__main__":
     cli()

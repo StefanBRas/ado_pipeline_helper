@@ -6,6 +6,7 @@ runner = CliRunner()
 
 TEST_PIPELINE = "tests/test_pipelines/test_pipeline_1.yml"
 
+
 def test_preview(pat_env):
     result = runner.invoke(cli, ["preview", TEST_PIPELINE])
     assert result.exit_code == 0, result

@@ -7,6 +7,7 @@ from ado_pipeline_helper.yaml_loader import yaml
 
 DEFAULT_CONFIG_PATH = Path(".ado_pipeline_helper.yml")
 
+
 class PipeLineSettings(BaseModel):
     id: Optional[int]
 
@@ -29,7 +30,3 @@ class ClientSettings(BaseModel):
     pipeline_path: Path
     pipeline_id: Optional[int]  # If not set, fetches from name of pipeline
     user: str = ""
-
-    def get_pipeline_name(self) -> str:
-        content = yaml.load(self.pipeline_path.read_text())
-        return content.get('name')
