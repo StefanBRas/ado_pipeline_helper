@@ -1,13 +1,12 @@
-import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal, Optional, OrderedDict, Tuple
+from typing import Any, Literal, OrderedDict
 
 from ruamel.yaml import YAML
-from ado_pipeline_helper.parameters import Parameters
 
+from ado_pipeline_helper.parameters import Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
 
 
@@ -127,17 +126,17 @@ class YamlResolver:
                     )
                 else:
                     raise YamlResolveError("Unsupported template type.")
-                new_context = context | {"cwd": template_path,
+                new_context = context | {
+                    "cwd": template_path,
                     "parameters": parameters,
-                    "parameter_values": obj.get('parameters', {}),
-
+                    "parameter_values": obj.get("parameters", {}),
                 }
                 return TraversalResult(True, template_resolved, new_context)
             # is parameter
             if isinstance(obj, str) and r"${{ parameters." in obj:
                 # must be in template context, parameters must be set
-                parameters: Parameters = context.get('parameters')
-                parameter_values: dict = context.get('parameter_values')
+                parameters: Parameters = context.get("parameters")
+                parameter_values: dict = context.get("parameter_values")
                 parameter = parameters.find_parameter_in_string(obj)
                 if parameter:
                     new_obj = parameter.sub(parameter_values.get(parameter.name), obj)
@@ -201,4 +200,3 @@ class YamlResolver:
         if isinstance(variables, dict):
             return [{"name": key, "value": value} for key, value in variables.items()]
         return variables
-

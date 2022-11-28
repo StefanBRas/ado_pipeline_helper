@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from pydantic import BaseModel, BaseSettings, Field, SecretStr
 

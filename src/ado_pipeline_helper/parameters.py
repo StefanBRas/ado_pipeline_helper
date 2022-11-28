@@ -52,9 +52,9 @@ class BooleanParameter(BaseParameter):
         if val is None:
             return None
         elif val:
-            return 'True'
+            return "True"
         else:
-            return 'False'
+            return "False"
 
     def sub(self, input: bool | None, obj):
         return self._strsub(
@@ -67,7 +67,6 @@ class BooleanParameter(BaseParameter):
 class ObjectParameter(BaseParameter):
     default: Optional[Any]
     type: Literal["object"] = "object"
-
 
 
 class StepParameter(BaseParameter):
@@ -131,11 +130,11 @@ class Parameters(BaseModel):
 
     @classmethod
     def from_template(cls, template: dict):
-        parameters = template.get('parameters')
+        parameters = template.get("parameters")
         if parameters is None:
             return cls(__root__={})
         else:
-            parms = {p['name']: p for p in parameters}
+            parms = {p["name"]: p for p in parameters}
             return cls(__root__=parms)
 
     def find_parameter_in_string(self, input_str) -> Parameter | None:
@@ -144,4 +143,3 @@ class Parameters(BaseModel):
             return self.__root__[matches[0]]
         else:
             return None
-

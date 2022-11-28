@@ -1,6 +1,5 @@
-import pytest
 
-from ado_pipeline_helper.yaml_loader import YamlResolver, traverse
+from ado_pipeline_helper.yaml_loader import traverse
 
 
 def test_traverse_id_func():
