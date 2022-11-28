@@ -6,7 +6,7 @@ name: test4parameters
 stages:
 - template: templates/stages/many_parameters.yml
   parameters:
-    somestring: "a" 
+    somestring: "non_default" 
     myString: a string
     myMultiString: default
     myNumber: 2
@@ -51,4 +51,6 @@ stages:
           steps:
           - script: echo step one
           - script: echo step two
-
+- template: templates/stages/many_parameters.yml
+  parameters:
+    somestring: "default" 
