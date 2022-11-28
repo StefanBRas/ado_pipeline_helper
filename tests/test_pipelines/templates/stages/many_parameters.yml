@@ -1,4 +1,6 @@
 parameters:
+- name: somestring 
+  type: string
 - name: myString
   type: string
   default: a string
@@ -54,15 +56,15 @@ parameters:
   type: stageList
 
 stages: 
-- stage: many_parameters_stage
+- stage: many_parameters_stage_${{ parameters.somestring }}
   jobs:
   - ${{ parameters.myjob }}
-  - job: stepList
+  - job: stepList_${{ parameters.somestring }}
     steps: ${{ parameters.mySteplist }}
-  - job: myJob_
+  - job: myJob__${{ parameters.somestring }}
     steps:
       - ${{ parameters.myStep }}
-  - job: testInlineParameterSubstitution 
+  - job: testInlineParameterSubstitution_${{ parameters.somestring }}
     steps:
       - script: echo ${{ parameters.myString }}
       - script: echo ${{ parameters.myMultiString }}

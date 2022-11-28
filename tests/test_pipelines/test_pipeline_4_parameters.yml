@@ -6,6 +6,7 @@ name: test4parameters
 stages:
 - template: templates/stages/many_parameters.yml
   parameters:
+    somestring: "a" 
     myString: a string
     myMultiString: default
     myNumber: 2
