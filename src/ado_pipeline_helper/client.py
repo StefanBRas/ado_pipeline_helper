@@ -7,7 +7,7 @@ from msrest.authentication import BasicAuthentication
 from pydantic import SecretStr
 
 from ado_pipeline_helper.config import ClientSettings
-from ado_pipeline_helper.yaml_loader import YamlResolver
+from ado_pipeline_helper.yaml_loader import YamlResolver, yaml
 
 
 class PipelineValidationError(Exception):
@@ -28,8 +28,8 @@ class Client:
         project: str,
         token: SecretStr,
         pipeline_path: Path,
-        pipeline_id: Optional[int],
-        pipeline_name: Optional[str],
+        pipeline_id: Optional[int] = None,
+        pipeline_name: Optional[str] = None,
         user: str = "",
     ) -> None:
         self._organization = organization
@@ -48,16 +48,35 @@ class Client:
     @property
     def pipeline_id(self) -> int:
         if self._pipeline_id is None:
-            return self._get_pipeline_id()
+            id_ = self._get_pipeline_id()
+            self._pipeline_id = id_
+            return id_
         else:
             return self._pipeline_id
 
-    @property
-    def pipeline_name(self) -> int:
-        if self._pipeline_id is None:
-            return self._get_pipeline_id()
+    def _get_pipeline_id(self) -> int:
+        project = self._project
+        pipelines = self._pipeline_client.list_pipelines(project)
+        for pipeline in pipelines:
+            if pipeline.name == self.pipeline_name:
+                return pipeline.id
         else:
-            return self._pipeline_id
+            raise PipelineNotFoundError(
+                f"No pipeline named {self._pipeline_name} was found in {project}"
+            )
+
+    @property
+    def pipeline_name(self) -> str:
+        if self._pipeline_name is None:
+            name = self._get_pipeline_name()
+            self._pipeline_name = name
+            return name
+        else:
+            return self._pipeline_name
+
+    def _get_pipeline_name(self) -> str:
+        content = yaml.load(self._pipeline_path.read_text())
+        return content.get('name')
 
     def _get_pipeline_client(self):
         credentials = BasicAuthentication(self._user, self._token.get_secret_value())
@@ -65,16 +84,6 @@ class Client:
         connection = Connection(base_url=organization_url, creds=credentials)
         return connection.clients_v6_0.get_pipelines_client()
 
-    def _get_pipeline_id(self) -> int:
-        project = self._project
-        pipelines = self._pipeline_client.list_pipelines(project)
-        for pipeline in pipelines:
-            if pipeline.name == self._pipeline_name:
-                return pipeline.id
-        else:
-            raise PipelineNotFoundError(
-                f"No pipeline named {self._pipeline_name} was found in {project}"
-            )
 
     def load_yaml(self) -> str:
         resolver = YamlResolver(self._pipeline_path)
