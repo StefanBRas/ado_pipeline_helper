@@ -69,7 +69,6 @@ stages:
       - script: echo ${{ parameters.myNumber }}
       - script: echo ${{ parameters.myNumber }}
       - script: echo ${{ parameters.myBoolean }}
-      - script: echo ${{ parameters.myObject }}
       - script: echo multiple parm in one ${{ parameters.myString }} ${{ parameters.myString }}
 - ${{ parameters.mystage }}
 
