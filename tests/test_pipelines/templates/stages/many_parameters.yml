@@ -59,8 +59,16 @@ stages:
   - ${{ parameters.myjob }}
   - job: stepList
     steps: ${{ parameters.mySteplist }}
-  - job: myStep
+  - job: myJob_
     steps:
       - ${{ parameters.myStep }}
+  - job: testInlineParameterSubstitution 
+    steps:
+      - echo ${{ parameters.myString }}
+      - echo ${{ parameters.myMultiString }}
+      - echo ${{ parameters.myNumber }}
+      - echo ${{ parameters.myNumber }}
+      - echo ${{ parameters.myBoolean }}
+      - echo ${{ parameters.myObject }}
 - ${{ parameters.mystage }}
 
