@@ -64,11 +64,12 @@ stages:
       - ${{ parameters.myStep }}
   - job: testInlineParameterSubstitution 
     steps:
-      - echo ${{ parameters.myString }}
-      - echo ${{ parameters.myMultiString }}
-      - echo ${{ parameters.myNumber }}
-      - echo ${{ parameters.myNumber }}
-      - echo ${{ parameters.myBoolean }}
-      - echo ${{ parameters.myObject }}
+      - script: echo ${{ parameters.myString }}
+      - script: echo ${{ parameters.myMultiString }}
+      - script: echo ${{ parameters.myNumber }}
+      - script: echo ${{ parameters.myNumber }}
+      - script: echo ${{ parameters.myBoolean }}
+      - script: echo ${{ parameters.myObject }}
+      - script: echo multiple parm in one ${{ parameters.myString }} ${{ parameters.myString }}
 - ${{ parameters.mystage }}
 
