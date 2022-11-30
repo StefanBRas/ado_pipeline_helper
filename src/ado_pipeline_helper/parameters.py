@@ -14,7 +14,7 @@ class BaseParameter(BaseModel):
     def sub(self, input, obj):
         return input if input is not None else self.default
 
-    def _strsub(self, input: str | None, obj: str, default: str | None):
+    def _strsub(self, input: Optional[str], obj: str, default: Optional[str]):
         replacement = input if input is not None else default
         if not replacement:
             raise ValueError(f"Value missing and no default for {self.name}")
@@ -27,7 +27,7 @@ class StringParameter(BaseParameter):
     default: Optional[str]
     type: Literal["string"] = "string"
 
-    def sub(self, input: str | None, obj: str):
+    def sub(self, input: Optional[str], obj: str):
         return self._strsub(input, obj, self.default)
 
 
@@ -35,7 +35,7 @@ class NumberParameter(BaseParameter):
     default: Optional[int]
     type: Literal["number"] = "number"
 
-    def sub(self, input: int | None, obj):
+    def sub(self, input: Optional[int], obj):
         return self._strsub(
             str(input) if input is not None else None,
             obj,
@@ -48,7 +48,7 @@ class BooleanParameter(BaseParameter):
     type: Literal["boolean"] = "boolean"
 
     @staticmethod
-    def _val_to_str(val: bool | None) -> str | None:
+    def _val_to_str(val: Optional[bool]) -> Optional[str]:
         if val is None:
             return None
         elif val:
@@ -56,7 +56,7 @@ class BooleanParameter(BaseParameter):
         else:
             return "False"
 
-    def sub(self, input: bool | None, obj):
+    def sub(self, input: Optional[bool], obj):
         return self._strsub(
             self._val_to_str(input),
             obj,
@@ -137,7 +137,7 @@ class Parameters(BaseModel):
             parms = {p["name"]: p for p in parameters}
             return cls(__root__=parms)
 
-    def find_parameter_in_string(self, input_str) -> Parameter | None:
+    def find_parameter_in_string(self, input_str) -> Optional[Parameter]:
         matches = re.findall(r"\${{ parameters\.(\w+)", input_str)
         if matches:
             return self.__root__[matches[0]]
