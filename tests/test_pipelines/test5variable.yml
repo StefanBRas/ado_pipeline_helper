@@ -1,0 +1,9 @@
+name: test5VariableExpression
+
+variables:
+- name: some_variable
+  value: some_thing
+
+steps:
+- script: echo ${{ variables.some_variable }}
+
