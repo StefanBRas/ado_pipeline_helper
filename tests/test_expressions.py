@@ -29,9 +29,7 @@ expressions = [
     "expression,expected", expressions, ids=range(len(expressions))
 )
 def test_visitor(expression, expected):
-    context = Context(
-        variables = {"MyVar": 1}
-    )
+    context = Context(variables={"MyVar": 1})
     visitor = ExpressionResolver(context)
     parsed = visitor.parse(expression)
     print(visitor.grammar.parse(expression))

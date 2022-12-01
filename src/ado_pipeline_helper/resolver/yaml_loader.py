@@ -3,12 +3,11 @@ from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, OrderedDict
-from pydantic import BaseModel, Field
 
 from ruamel.yaml import YAML
-from ado_pipeline_helper.resolver.expression import ExpressionResolver
 
-from ado_pipeline_helper.resolver.parameters import Parameters, Context
+from ado_pipeline_helper.resolver.expression import ExpressionResolver
+from ado_pipeline_helper.resolver.parameters import Context, Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
 
 
@@ -27,9 +26,10 @@ class YamlStrDumper(YAML):
 
 yaml = YamlStrDumper()
 yaml.preserve_quotes = True  # type:ignore
-unordered_yaml = YamlStrDumper(typ="safe") # sic
+unordered_yaml = YamlStrDumper(typ="safe")  # sic
 
 TemplateTypes = Literal["stages", "jobs", "steps", "variables"]
+
 
 @dataclass()
 class TraversalResult:
@@ -126,17 +126,19 @@ class YamlResolver:
                 else:
                     raise YamlResolveError("Unsupported template type.")
                 new_context = Context(
-                    cwd = template_path,
-                    parameters= parameters,
-                    parameter_values= obj.get("parameters", {}),
+                    cwd=template_path,
+                    parameters=parameters,
+                    parameter_values=obj.get("parameters", {}),
                 )
                 return TraversalResult(True, template_resolved, new_context)
             # Expression
-            if isinstance(obj, str) and ExpressionResolver.find_expression_in_string(obj):
+            if isinstance(obj, str) and ExpressionResolver.find_expression_in_string(
+                obj
+            ):
                 # TODO: handle this better when we dont resolve to a string
                 expression_resolver = ExpressionResolver(context=context)
-                expression: str = ExpressionResolver.find_expression_in_string(obj) # type: ignore
-                new_obj = expression_resolver.evaluate(expression)['val']
+                expression: str = ExpressionResolver.find_expression_in_string(obj)  # type: ignore
+                new_obj = expression_resolver.evaluate(expression)["val"]
                 # Yeah, this is not good.
                 # The issue is that new_obj might be some weird
                 # ruamel.Doublescalarstring whatever
@@ -146,12 +148,8 @@ class YamlResolver:
                 return TraversalResult(True, new_obj, context)
             return TraversalResult(False, obj, context)
 
-        initial_context = Context(
-            cwd = self.pipeline_path
-        )
-        yaml_resolved = traverse(
-            self.pipeline, mod_func, context=initial_context
-        )
+        initial_context = Context(cwd=self.pipeline_path)
+        yaml_resolved = traverse(self.pipeline, mod_func, context=initial_context)
         return str(yaml.dump(yaml_resolved))
 
     @staticmethod
@@ -171,7 +169,7 @@ class YamlResolver:
         return "stages" in dct.keys()
 
     def _handle_template(
-            self, dct, template_reference, key: TemplateTypes, context: Context
+        self, dct, template_reference, key: TemplateTypes, context: Context
     ) -> dict:
         """Resolves jobs template yaml from template reference."""
         template_items = dct.pop(key)

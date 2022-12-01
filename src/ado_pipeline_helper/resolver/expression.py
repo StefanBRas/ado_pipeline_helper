@@ -1,12 +1,14 @@
 import re
 from typing import Optional
+
 from parsimonious import NodeVisitor
 from parsimonious.grammar import Grammar
-from ado_pipeline_helper.resolver.parameters import Context
 
+from ado_pipeline_helper.resolver.parameters import Context
 from ado_pipeline_helper.utils import listify
 
-g = Grammar(r"""
+g = Grammar(
+    r"""
 expression = expression_open conditional? (loop / expr) expression_close
 expression_open  = "${{" ws*
 expression_close = ws* "}}"
@@ -88,16 +90,15 @@ class ExpressionResolver(NodeVisitor):
         property_name = visited_children[2]
         return self._get_parm_value(var_name, property_name)
 
-
     def _get_parm_value(self, var_name: str, property_name: str):
-        if var_name == 'parameters':
+        if var_name == "parameters":
             val = self.context.parameter_values.get(property_name)
             default = self.context.parameters.__root__[property_name].default
             return val or default
-        elif var_name == 'variables':
+        elif var_name == "variables":
             return self.context.variables[property_name]
         else:
-            raise ValueError('Can only index into variables or parameters')
+            raise ValueError("Can only index into variables or parameters")
 
     def visit_literal(self, node, visited_children):
         return visited_children[0]  # text rule
@@ -134,7 +135,6 @@ class ExpressionResolver(NodeVisitor):
             return matches[0]
         else:
             return None
-
 
 
 class AdoFunctions:

@@ -2,10 +2,10 @@
 https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters?view=azure-devops&tabs=script#parameter-data-types
 """
 import re
+from pathlib import Path
 from typing import Any, Literal, Mapping, Optional, Union
 
 from pydantic import BaseModel, Field
-from pathlib import Path
 
 
 class BaseParameter(BaseModel):
@@ -147,10 +147,10 @@ class Parameters(BaseModel):
 
 
 class Context(BaseModel):
-    parameters: Parameters = Field(default_factory= lambda: Parameters(__root__=dict()))
+    parameters: Parameters = Field(default_factory=lambda: Parameters(__root__=dict()))
     parameter_values: dict = Field(default_factory=dict)
-    variables: dict  = Field(default_factory=dict)
-    cwd: Path = Path('.')
+    variables: dict = Field(default_factory=dict)
+    cwd: Path = Path(".")
 
     def merge(self, obj: dict):
         fields = self.__fields__
@@ -158,5 +158,3 @@ class Context(BaseModel):
             if key in fields:
                 setattr(self, key, val)
         return self
-
-
