@@ -1,6 +1,7 @@
 import pytest
 
-from ado_pipeline_helper.expression import Visitor
+from ado_pipeline_helper.resolver.expression import ExpressionResolver
+from ado_pipeline_helper.resolver.yaml_loader import Context
 
 expressions = [
     ("${{ 1 }}", 1),
@@ -28,8 +29,10 @@ expressions = [
     "expression,expected", expressions, ids=range(len(expressions))
 )
 def test_visitor(expression, expected):
-    refs = {"variables": {"MyVar": 1}}
-    visitor = Visitor(refs)
+    context = Context(
+        variables = {"MyVar": 1}
+    )
+    visitor = ExpressionResolver(context)
     parsed = visitor.parse(expression)
     print(visitor.grammar.parse(expression))
     assert expected == parsed["val"]

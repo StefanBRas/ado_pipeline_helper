@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, BaseSettings, Field, SecretStr
 
-from ado_pipeline_helper.yaml_loader import yaml
+from ado_pipeline_helper.resolver.yaml_loader import yaml
 
 DEFAULT_CONFIG_PATH = Path(".ado_pipeline_helper.yml")
 

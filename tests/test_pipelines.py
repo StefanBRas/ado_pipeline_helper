@@ -24,8 +24,6 @@ def test_preview(get_client: Callable[..., Client], id_, path):
 def test_validate(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
     preview = client.preview()
-    print(str(preview.final_yaml))
-    print(client.load_yaml())
     validated = client.validate()
     assert isinstance(preview, Run)
     assert isinstance(validated, Run)

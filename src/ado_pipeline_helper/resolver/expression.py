@@ -1,10 +1,12 @@
+import re
+from typing import Optional
 from parsimonious import NodeVisitor
 from parsimonious.grammar import Grammar
+from ado_pipeline_helper.resolver.parameters import Context
 
 from ado_pipeline_helper.utils import listify
 
-g = Grammar(
-    r"""
+g = Grammar(r"""
 expression = expression_open conditional? (loop / expr) expression_close
 expression_open  = "${{" ws*
 expression_close = ws* "}}"
@@ -44,11 +46,11 @@ index_ref = var_name "[" "'" property_name "'" "]"
 # - a valid nested combination of these.
 
 
-class Visitor(NodeVisitor):
+class ExpressionResolver(NodeVisitor):
     grammar = g
 
-    def __init__(self, refs):
-        self.refs = refs
+    def __init__(self, context: Context):
+        self.context = context
 
     def generic_visit(self, node, visited_children):
         if len(visited_children) == 1:
@@ -79,12 +81,23 @@ class Visitor(NodeVisitor):
     def visit_index_ref(self, node, visited_children):
         var_name = visited_children[0]
         property_name = visited_children[3]
-        return self.refs[var_name][property_name]
+        return self._get_parm_value(var_name, property_name)
 
     def visit_prop_ref(self, node, visited_children):
         var_name = visited_children[0]
         property_name = visited_children[2]
-        return self.refs[var_name][property_name]
+        return self._get_parm_value(var_name, property_name)
+
+
+    def _get_parm_value(self, var_name: str, property_name: str):
+        if var_name == 'parameters':
+            val = self.context.parameter_values.get(property_name)
+            default = self.context.parameters.__root__[property_name].default
+            return val or default
+        elif var_name == 'variables':
+            return self.context.variables[property_name]
+        else:
+            raise ValueError('Can only index into variables or parameters')
 
     def visit_literal(self, node, visited_children):
         return visited_children[0]  # text rule
@@ -110,6 +123,18 @@ class Visitor(NodeVisitor):
             "conditional": visited_children[1],
             "val": visited_children[2],
         }
+
+    def evaluate(self, obj) -> dict:
+        return self.parse(obj)
+
+    @staticmethod
+    def find_expression_in_string(input_str) -> Optional[str]:
+        matches = re.findall(r"\${{.*?}}", input_str)
+        if matches:
+            return matches[0]
+        else:
+            return None
+
 
 
 class AdoFunctions:

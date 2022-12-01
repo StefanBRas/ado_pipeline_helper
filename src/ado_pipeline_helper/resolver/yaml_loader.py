@@ -3,14 +3,16 @@ from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, OrderedDict
+from pydantic import BaseModel, Field
 
 from ruamel.yaml import YAML
+from ado_pipeline_helper.resolver.expression import ExpressionResolver
 
-from ado_pipeline_helper.parameters import Parameters
+from ado_pipeline_helper.resolver.parameters import Parameters, Context
 from ado_pipeline_helper.utils import listify, set_if_not_none
 
 
-class MyYAML(YAML):
+class YamlStrDumper(YAML):
     """wrapper so we can dump to a string."""
 
     def dump(self, data, stream=None, **kw):
@@ -23,26 +25,23 @@ class MyYAML(YAML):
             return stream.getvalue()
 
 
-yaml = MyYAML()
+yaml = YamlStrDumper()
 yaml.preserve_quotes = True  # type:ignore
-unordered_yaml = MyYAML(typ="safe")
+unordered_yaml = YamlStrDumper(typ="safe") # sic
 
 TemplateTypes = Literal["stages", "jobs", "steps", "variables"]
-
 
 @dataclass()
 class TraversalResult:
     has_change: bool
     val: Any
-    context: dict
+    context: Context
 
 
 def traverse(
     obj,
-    mod_func: Callable[..., TraversalResult] = lambda x, _: TraversalResult(
-        has_change=False, val=x, context={}
-    ),
-    context={},
+    mod_func: Callable[..., TraversalResult],
+    context: Context,
 ):
     mod_func_result = mod_func(obj, context)
     if mod_func_result.has_change:
@@ -73,14 +72,14 @@ class YamlResolver:
         self.pipeline: OrderedDict = yaml.load(content)
 
     def get_yaml(self) -> str:
-        def mod_func(obj, context) -> TraversalResult:
+        def mod_func(obj, context: Context) -> TraversalResult:
             # is extend template
             if isinstance(obj, dict) and "extends" in obj:
                 extend_node = obj["extends"]
                 relative_path = extend_node["template"]
                 if "@" in relative_path:
                     return TraversalResult(False, obj, context)
-                template_path = context["cwd"].parent.joinpath(relative_path)
+                template_path = context.cwd.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
                 new_obj = {"template": relative_path}
@@ -104,7 +103,7 @@ class YamlResolver:
                 relative_path = obj["template"]
                 if "@" in relative_path:
                     return TraversalResult(False, obj, context)
-                template_path = context["cwd"].parent.joinpath(relative_path)
+                template_path = context.cwd.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
                 parameters = Parameters.from_template(template_dict)
@@ -126,25 +125,32 @@ class YamlResolver:
                     )
                 else:
                     raise YamlResolveError("Unsupported template type.")
-                new_context = context | {
-                    "cwd": template_path,
-                    "parameters": parameters,
-                    "parameter_values": obj.get("parameters", {}),
-                }
+                new_context = Context(
+                    cwd = template_path,
+                    parameters= parameters,
+                    parameter_values= obj.get("parameters", {}),
+                )
                 return TraversalResult(True, template_resolved, new_context)
-            # is parameter
-            if isinstance(obj, str) and r"${{ parameters." in obj:
-                # must be in template context, parameters must be set
-                parameters: Parameters = context.get("parameters")
-                parameter_values: dict = context.get("parameter_values")
-                parameter = parameters.find_parameter_in_string(obj)
-                if parameter:
-                    new_obj = parameter.sub(parameter_values.get(parameter.name), obj)
-                    return TraversalResult(True, new_obj, context)
+            # Expression
+            if isinstance(obj, str) and ExpressionResolver.find_expression_in_string(obj):
+                # TODO: handle this better when we dont resolve to a string
+                expression_resolver = ExpressionResolver(context=context)
+                expression: str = ExpressionResolver.find_expression_in_string(obj) # type: ignore
+                new_obj = expression_resolver.evaluate(expression)['val']
+                # Yeah, this is not good.
+                # The issue is that new_obj might be some weird
+                # ruamel.Doublescalarstring whatever
+                if type(new_obj) in [str, bool, int, float] or isinstance(new_obj, str):
+                    new_obj = obj.replace(expression, str(new_obj))
+                    print(new_obj)
+                return TraversalResult(True, new_obj, context)
             return TraversalResult(False, obj, context)
 
+        initial_context = Context(
+            cwd = self.pipeline_path
+        )
         yaml_resolved = traverse(
-            self.pipeline, mod_func, context={"cwd": self.pipeline_path}
+            self.pipeline, mod_func, context=initial_context
         )
         return str(yaml.dump(yaml_resolved))
 
@@ -165,7 +171,7 @@ class YamlResolver:
         return "stages" in dct.keys()
 
     def _handle_template(
-        self, dct, template_reference, key: TemplateTypes, context
+            self, dct, template_reference, key: TemplateTypes, context: Context
     ) -> dict:
         """Resolves jobs template yaml from template reference."""
         template_items = dct.pop(key)

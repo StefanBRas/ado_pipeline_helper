@@ -7,7 +7,7 @@ from msrest.authentication import BasicAuthentication
 from pydantic import SecretStr
 
 from ado_pipeline_helper.config import ClientSettings
-from ado_pipeline_helper.yaml_loader import YamlResolver, yaml
+from ado_pipeline_helper.resolver.yaml_loader import YamlResolver, yaml
 
 
 class PipelineValidationError(Exception):
