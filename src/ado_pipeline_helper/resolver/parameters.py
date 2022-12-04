@@ -1,6 +1,7 @@
 """
 https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters?view=azure-devops&tabs=script#parameter-data-types
 """
+from copy import deepcopy
 import re
 from pathlib import Path
 from typing import Any, Literal, Mapping, Optional, Union
@@ -151,7 +152,8 @@ class Context(BaseModel):
     parameters: Parameters = Field(default_factory=lambda: Parameters(__root__=dict()))
     parameter_values: dict = Field(default_factory=dict)
     variables: dict = Field(default_factory=dict)
-    cwd: Path = Path(".")
+    cwd: Path
+    current_key: Optional[str] = None
 
     def merge(self, obj: dict):
         fields = self.__fields__
@@ -159,3 +161,6 @@ class Context(BaseModel):
             if key in fields:
                 setattr(self, key, val)
         return self
+
+    def deepcopy(self):
+        return deepcopy(self)
