@@ -16,8 +16,8 @@ stages:
       var_to_override: jobs
     steps:
     - bash: echo ${{ variables.job_variable }}
-    - bash: echo ${{ variables.stage_varialbe }}
-    - bash: echo ${{ variables.global_varialbe }}
+    - bash: echo ${{ variables.stage_variable }}
+    - bash: echo ${{ variables.global_variable }}
     - bash: echo ${{ variables.var_to_override }}
   - job: job2
     steps:
