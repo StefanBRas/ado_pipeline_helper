@@ -1,8 +1,8 @@
 """
 https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters?view=azure-devops&tabs=script#parameter-data-types
 """
-from copy import deepcopy
 import re
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Literal, Mapping, Optional, Union
 
@@ -149,6 +149,7 @@ class Parameters(BaseModel):
 
 class Context(BaseModel):
     """should probably be in another module"""
+
     parameters: Parameters = Field(default_factory=lambda: Parameters(__root__=dict()))
     parameter_values: dict = Field(default_factory=dict)
     variables: dict = Field(default_factory=dict)

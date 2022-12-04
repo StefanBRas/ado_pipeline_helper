@@ -1,16 +1,16 @@
+import warnings
 from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, OrderedDict, Tuple
-from copy import deepcopy
 
 from ruamel.yaml import YAML
 
 from ado_pipeline_helper.resolver.expression import ExpressionResolver
 from ado_pipeline_helper.resolver.parameters import Context, Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
-import warnings
 
 
 class YamlStrDumper(YAML):
@@ -32,7 +32,8 @@ unordered_yaml = YamlStrDumper(typ="safe")  # sic
 
 TemplateTypes = Literal["stages", "jobs", "steps", "variables"]
 
-VARIABLES_KEY = 'variables'
+VARIABLES_KEY = "variables"
+
 
 @dataclass()
 class TraversalResult:
@@ -92,11 +93,10 @@ class YamlResolver:
         content = self.pipeline_path.read_text()
         self.pipeline: OrderedDict = yaml.load(content)
 
-
     def get_yaml(self) -> str:
         def mod_func(obj, context: Context) -> TraversalResult:
             # add variables to context
-            if context.current_key == 'variables':
+            if context.current_key == "variables":
                 print("here now")
                 new_context = deepcopy(context)
                 variables = new_context.variables
@@ -105,32 +105,38 @@ class YamlResolver:
                         variables[key] = val
                 if isinstance(obj, list):
                     for variable in obj:
-                        if 'group' in variable:
+                        if "group" in variable:
                             warnings.warn("Group variables not implemented yet.")
                             continue
-                        if 'template' in variable:
+                        if "template" in variable:
                             relative_path = variable["template"]
                             if "@" in relative_path:
-                                warnings.warn("Remote variable templates not implemented yet.")
+                                warnings.warn(
+                                    "Remote variable templates not implemented yet."
+                                )
                                 continue
                             template_path = context.cwd.parent.joinpath(relative_path)
                             template_content = template_path.read_text()
                             template_dict = yaml.load(template_content)
-                            template_variables = template_dict['variables']
+                            template_variables = template_dict["variables"]
                             if isinstance(template_variables, list):
                                 for template_variable in template_variables:
-                                    variables[template_variable['name']] = template_variable['value']
+                                    variables[
+                                        template_variable["name"]
+                                    ] = template_variable["value"]
                             elif isinstance(template_variables, dict):
                                 for name, value in template_variables.items():
                                     variables[name] = value
                             else:
-                                raise ValueError("Variable template must be of correct format.")
+                                raise ValueError(
+                                    "Variable template must be of correct format."
+                                )
                         else:
-                            variables[variable['name']] = variable['value']
+                            variables[variable["name"]] = variable["value"]
                 for key, val in variables.items():
-                    if isinstance(val, str) and ExpressionResolver.find_expression_in_string(
-                       val 
-                    ):
+                    if isinstance(
+                        val, str
+                    ) and ExpressionResolver.find_expression_in_string(val):
                         variables[key] = self._eval_expression(val, context)
                 new_context.current_key = None
                 return TraversalResult(False, obj, new_context, new_context)
@@ -189,8 +195,8 @@ class YamlResolver:
                     raise YamlResolveError("Unsupported template type.")
                 child_context = deepcopy(context)
                 child_context.cwd = template_path
-                child_context.parameters=parameters
-                child_context.parameter_values=obj.get("parameters", {})
+                child_context.parameters = parameters
+                child_context.parameter_values = obj.get("parameters", {})
                 return TraversalResult(True, template_resolved, child_context, context)
             # Expression
             if isinstance(obj, str) and ExpressionResolver.find_expression_in_string(

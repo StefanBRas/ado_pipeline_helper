@@ -97,7 +97,9 @@ class ExpressionResolver(NodeVisitor):
             return val or default
         elif var_name == "variables":
             if self.context.variables is None:
-                raise ValueError(f"Accessing variables.{property_name} but no variables have been set.")
+                raise ValueError(
+                    f"Accessing variables.{property_name} but no variables have been set."
+                )
             return self.context.variables[property_name]
         else:
             raise ValueError("Can only index into variables or parameters")
