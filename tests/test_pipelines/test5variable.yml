@@ -1,9 +1,36 @@
 name: test5VariableExpression
 
 variables:
-- name: some_variable
-  value: some_thing
+  global_variable: global_var
+  var_to_override: global
 
-steps:
-- script: echo ${{ variables.some_variable }}
+stages:
+- stage: stage1
+  variables:
+    stage_variable: stage_var
+    var_to_override: stage
+  jobs:
+  - job: job1
+    variables:
+      job_variable: job_var
+      var_to_override: jobs
+    steps:
+    - bash: echo ${{ variables.job_variable }}
+    - bash: echo ${{ variables.stage_varialbe }}
+    - bash: echo ${{ variables.global_varialbe }}
+    - bash: echo ${{ variables.var_to_override }}
+  - job: job2
+    steps:
+    - bash: echo ${{ variables.var_to_override }}
+- stage: stage2
+  jobs:
+  - job: job12
+    variables:
+      var_to_override: jobs
+    steps:
+    - bash: echo ${{ variables.var_to_override }}
+  - job: job22
+    steps:
+    - bash: echo ${{ variables.var_to_override }}
+
 

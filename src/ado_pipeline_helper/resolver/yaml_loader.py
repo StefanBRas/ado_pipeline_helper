@@ -3,12 +3,14 @@ from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, OrderedDict
+from copy import deepcopy
 
 from ruamel.yaml import YAML
 
 from ado_pipeline_helper.resolver.expression import ExpressionResolver
 from ado_pipeline_helper.resolver.parameters import Context, Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
+import warnings
 
 
 class YamlStrDumper(YAML):
@@ -54,8 +56,21 @@ def traverse(
             new_list.extend(listify(result))
         return new_list  # type:ignore
     if isinstance(obj, dict):
-        for key, val in list(obj.items()):
-            result = traverse(val, mod_func, mod_func_result.context)
+        # variables needs to be resolved first
+        dict_keys = list(obj.keys())
+        new_context = mod_func_result.context
+        if 'variables' in dict_keys:
+            result = traverse(obj['variables'], mod_func, mod_func_result.context)
+            obj["variables"] = result
+            new_context = deepcopy(mod_func_result.context)
+            if isinstance(result, list):
+                for var in result:
+                    new_context.variables[var['name']] = var['value']
+            elif isinstance(result, dict):
+                for name, value in result.items():
+                    new_context.variables[name] = value
+        for key, val in obj.items():
+            result = traverse(val, mod_func, new_context)
             obj[key] = result
         return obj
     return obj
@@ -71,8 +86,44 @@ class YamlResolver:
         content = self.pipeline_path.read_text()
         self.pipeline: OrderedDict = yaml.load(content)
 
+
     def get_yaml(self) -> str:
         def mod_func(obj, context: Context) -> TraversalResult:
+            # is main template, add variables to context
+            # if isinstance(obj, dict) and "variables" in obj:
+            #     # Some stuff about this is not really optimal -
+            #     # We manually collect it, but it's then resolved afterwards
+            #     # Maybe we should hardcode the order in the traversal function,
+            #     # So if an object has the variables key, it should start by resolving that
+            #     # And then add to the context after
+            #     # also, expressions are not handled
+            #     if context.variables is None:
+            #         variables = {}
+            #         for variable in obj['variables']:
+            #             if 'group' in variable:
+            #                 warnings.warn("Group variables not implemented yet.")
+            #                 continue
+            #             if 'template' in variable:
+            #                 relative_path = variable["template"]
+            #                 if "@" in relative_path:
+            #                     return TraversalResult(False, obj, context)
+            #                 template_path = context.cwd.parent.joinpath(relative_path)
+            #                 template_content = template_path.read_text()
+            #                 template_dict = yaml.load(template_content)
+            #                 template_variables = template_dict['variables']
+            #                 if isinstance(template_variables, list):
+            #                     for template_variable in template_variables:
+            #                         variables[template_variable['name']] = template_variable['value']
+            #                 elif isinstance(template_variables, dict):
+            #                     for name, value in template_variables.items():
+            #                         variables[name] = value
+            #                 else:
+            #                     raise ValueError("Variable template must be of correct format.")
+            #             else:
+            #                 variables[variable['name']] = variable['value']
+            #         new_context = deepcopy(context)
+            #         new_context.variables = variables
+            #         return TraversalResult(True, obj, new_context)
             # is extend template
             if isinstance(obj, dict) and "extends" in obj:
                 extend_node = obj["extends"]
