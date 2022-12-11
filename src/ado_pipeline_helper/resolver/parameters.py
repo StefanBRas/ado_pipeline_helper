@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any, Literal, Mapping, Optional, Union
 
 from pydantic import BaseModel, Field
-
+from ruamel.yaml.scalarstring import PlainScalarString, ScalarString
 
 PARAMETER_EXPRESSION_REGEX = re.compile(r"\${{\s*parameters\.(\w+)\s*}}")
+
 
 class BaseParameter(BaseModel):
     name: str
@@ -151,6 +152,13 @@ class Parameters(BaseModel):
                     parameter = self.__root__[parameter_name]
                     val = parameter_values.get(parameter.name)
                     obj = obj.replace(match.group(0), parameter.get_val(val))
+                    if isinstance(obj, ScalarString):
+                        # Weird edge case, where ADO will drop quotes on a string
+                        # if there is a parameter to be substituted into it in
+                        # a template. We need to set it to PlainScalarString and
+                        # not just str because ruamel will try to preserve
+                        # the qutation style when we write back to the CommentedMap (dict).
+                        obj = PlainScalarString(str(obj))
                 return obj
         else:
             raise Exception("parameter expression not found in input")

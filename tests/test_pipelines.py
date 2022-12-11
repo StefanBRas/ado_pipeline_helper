@@ -19,6 +19,7 @@ def _id_func(val):
         return val.name
     return val
 
+
 @pytest.mark.parametrize("path,id_", TEST_PIPELINES, ids=_id_func)
 def test_preview(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
@@ -31,8 +32,6 @@ def test_validate(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
     preview = client.preview()
     validated = client.validate()
-    loaded = client.load_yaml()
     assert isinstance(preview, Run)
     assert isinstance(validated, Run)
     assert preview.final_yaml == validated.final_yaml
-

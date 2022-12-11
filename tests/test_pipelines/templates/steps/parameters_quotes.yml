@@ -1,0 +1,14 @@
+# See gh issue <x>
+parameters:
+- name: parameter1
+  default: default_value
+
+steps:
+- bash: "echo ${{  parameters.parameter1 }}"
+  displayName: ShouldBeDoubleQuotedButIsNot
+- bash: 'echo ${{  parameters.parameter1 }}'
+  displayName: ShouldBeSingleQuoted 
+- bash: "echo value"
+  displayName: ShouldBeDoubleQuoted
+- bash: 'echo value'
+  displayName: ShouldBeSingleQuoted 

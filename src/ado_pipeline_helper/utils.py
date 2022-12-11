@@ -25,5 +25,3 @@ def set_if_not_none(
         else:
             setattr(obj, key, val)
     return obj
-
-
