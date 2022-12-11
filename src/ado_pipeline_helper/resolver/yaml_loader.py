@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
@@ -8,7 +7,6 @@ from typing import Any, Literal, OrderedDict, Tuple
 
 from ruamel.yaml import YAML
 
-from ado_pipeline_helper.resolver.expression import ExpressionResolver
 from ado_pipeline_helper.resolver.parameters import Context, Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
 
@@ -39,48 +37,29 @@ VARIABLES_KEY = "variables"
 class TraversalResult:
     has_change: bool
     val: Any
-    child_context: Context
-    sibling_context: Context
+    context: Context
 
 
 def traverse(
     obj,
     mod_func: Callable[..., TraversalResult],
     context: Context,
-) -> Tuple[Any, Context]:
+) -> Any:
     mod_func_result = mod_func(obj, context)
+    context = mod_func_result.context
     if mod_func_result.has_change:
-        return traverse(mod_func_result.val, mod_func, mod_func_result.child_context)
-    result = mod_func_result.val
-    context = mod_func_result.child_context
+        return traverse(mod_func_result.val, mod_func, context)
     if isinstance(obj, list):
         new_list = []
         for val in obj:
-            result, context = traverse(val, mod_func, context)
+            result = traverse(val, mod_func, context)
             new_list.extend(listify(result))
-        return new_list, context
+        return new_list
     if isinstance(obj, dict):
-        # variables needs to be resolved first
-        dict_keys = list(obj.keys())
-        if VARIABLES_KEY in dict_keys:
-            dict_keys.remove(VARIABLES_KEY)
-            dict_keys.insert(0, VARIABLES_KEY)
-            # result, context = traverse(obj['variables'], mod_func, context)
-            # obj["variables"] = result
-            # context = deepcopy(context)
-            # if isinstance(result, list):
-            #     for var in result:
-            #         context.variables[var['name']] = var['value']
-            # elif isinstance(result, dict):
-            #     for name, value in result.items():
-            #         context.variables[name] = value
-        for key in dict_keys:
-            new_context = context.deepcopy()
-            new_context.current_key = key
-            result, context = traverse(obj[key], mod_func, new_context)
-            obj[key] = result
-        return obj, mod_func_result.sibling_context
-    return obj, context
+        for key, val in list(obj.items()):
+            obj[key] = traverse(obj[key], mod_func, context)
+        return obj
+    return obj
 
 
 class YamlResolveError(Exception):
@@ -95,57 +74,12 @@ class YamlResolver:
 
     def get_yaml(self) -> str:
         def mod_func(obj, context: Context) -> TraversalResult:
-            # add variables to context
-            if context.current_key == "variables":
-                print("here now")
-                new_context = deepcopy(context)
-                variables = new_context.variables
-                if isinstance(obj, dict):
-                    for key, val in obj.items():
-                        variables[key] = val
-                if isinstance(obj, list):
-                    for variable in obj:
-                        if "group" in variable:
-                            warnings.warn("Group variables not implemented yet.")
-                            continue
-                        if "template" in variable:
-                            relative_path = variable["template"]
-                            if "@" in relative_path:
-                                warnings.warn(
-                                    "Remote variable templates not implemented yet."
-                                )
-                                continue
-                            template_path = context.cwd.parent.joinpath(relative_path)
-                            template_content = template_path.read_text()
-                            template_dict = yaml.load(template_content)
-                            template_variables = template_dict["variables"]
-                            if isinstance(template_variables, list):
-                                for template_variable in template_variables:
-                                    variables[
-                                        template_variable["name"]
-                                    ] = template_variable["value"]
-                            elif isinstance(template_variables, dict):
-                                for name, value in template_variables.items():
-                                    variables[name] = value
-                            else:
-                                raise ValueError(
-                                    "Variable template must be of correct format."
-                                )
-                        else:
-                            variables[variable["name"]] = variable["value"]
-                for key, val in variables.items():
-                    if isinstance(
-                        val, str
-                    ) and ExpressionResolver.find_expression_in_string(val):
-                        variables[key] = self._eval_expression(val, context)
-                new_context.current_key = None
-                return TraversalResult(False, obj, new_context, new_context)
             # is extend template
             if isinstance(obj, dict) and "extends" in obj:
                 extend_node = obj["extends"]
                 relative_path = extend_node["template"]
                 if "@" in relative_path:
-                    return TraversalResult(False, obj, context, context)
+                    return TraversalResult(False, obj, context)
                 template_path = context.cwd.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
@@ -164,13 +98,12 @@ class YamlResolver:
                         "Can only extend from step, job or stage template."
                     )
                 del obj["extends"]
-                return TraversalResult(True, obj, context, context)
+                return TraversalResult(True, obj, context)
             # is a template reference
             if isinstance(obj, dict) and "template" in obj:
-                breakpoint()
                 relative_path = obj["template"]
                 if "@" in relative_path:
-                    return TraversalResult(False, obj, context, context)
+                    return TraversalResult(False, obj, context)
                 template_path = context.cwd.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
@@ -193,34 +126,22 @@ class YamlResolver:
                     )
                 else:
                     raise YamlResolveError("Unsupported template type.")
-                child_context = deepcopy(context)
-                child_context.cwd = template_path
-                child_context.parameters = parameters
-                child_context.parameter_values = obj.get("parameters", {})
-                return TraversalResult(True, template_resolved, child_context, context)
-            # Expression
-            if isinstance(obj, str) and ExpressionResolver.find_expression_in_string(
-                obj
-            ):
-                # TODO: handle this better when we dont resolve to a string
-                new_obj = self._eval_expression(obj, context)
-                return TraversalResult(True, new_obj, context, context)
-            return TraversalResult(False, obj, context, context)
-
+                context = deepcopy(context)
+                context.cwd = template_path
+                context.parameters = parameters
+                context.parameter_values = obj.get("parameters", {})
+                return TraversalResult(True, template_resolved, context)
+            # parameters in template, add to context
+            if isinstance(obj, str) and Parameters.str_has_parameter_expression(obj):
+                parameters: Parameters = context.parameters
+                parameter_values: dict = context.parameter_values
+                new_obj = parameters.sub(obj, parameter_values)
+                return TraversalResult(True, new_obj, context)
+            return TraversalResult(False, obj, context)
         initial_context = Context(cwd=self.pipeline_path)
-        yaml_resolved, _ = traverse(self.pipeline, mod_func, context=initial_context)
+        yaml_resolved = traverse(self.pipeline, mod_func, context=initial_context)
         return str(yaml.dump(yaml_resolved))
 
-    def _eval_expression(self, obj, context):
-        expression_resolver = ExpressionResolver(context=context)
-        expression: str = ExpressionResolver.find_expression_in_string(obj)  # type: ignore
-        new_obj = expression_resolver.evaluate(expression)["val"]
-        # Yeah, this is not good.
-        # The issue is that new_obj might be some weird
-        # ruamel.Doublescalarstring whatever
-        if type(new_obj) in [str, bool, int, float] or isinstance(new_obj, str):
-            new_obj = obj.replace(expression, str(new_obj))
-        return new_obj
 
     @staticmethod
     def _is_jobs_template(dct: dict):

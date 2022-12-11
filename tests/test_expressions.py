@@ -24,7 +24,7 @@ expressions = [
     ("${{ variables.MyVar }}", 1),
 ]
 
-
+@pytest.mark.skip
 @pytest.mark.parametrize(
     "expression,expected", expressions, ids=range(len(expressions))
 )

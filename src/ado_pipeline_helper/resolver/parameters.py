@@ -12,38 +12,25 @@ from pydantic import BaseModel, Field
 class BaseParameter(BaseModel):
     name: str
     default: Any
-
-    def sub(self, input, obj):
+    
+    def get_val(self, input):
         return input if input is not None else self.default
-
-    def _strsub(self, input: Optional[str], obj: str, default: Optional[str]):
-        replacement = input if input is not None else default
-        if not replacement:
-            raise ValueError(f"Value missing and no default for {self.name}")
-        pattern = r"\${{ parameters\." + self.name + r" }}"
-        input = re.sub(pattern, replacement, obj)
-        return input
 
 
 class StringParameter(BaseParameter):
     default: Optional[str]
     type: Literal["string"] = "string"
 
-    def sub(self, input: Optional[str], obj: str):
-        return self._strsub(input, obj, self.default)
+    def get_val(self, input: Optional[str]) -> str:
+        return super().get_val(input)
 
 
 class NumberParameter(BaseParameter):
-    default: Optional[int]
+    default: Optional[int] # TODO: can they be float?
     type: Literal["number"] = "number"
 
-    def sub(self, input: Optional[int], obj):
-        return self._strsub(
-            str(input) if input is not None else None,
-            obj,
-            str(self.default) if self.default is not None else None,
-        )
-
+    def get_val(self, input: Optional[int]) -> str:
+        return str(super().get_val(input))
 
 class BooleanParameter(BaseParameter):
     default: Optional[bool]
@@ -58,12 +45,15 @@ class BooleanParameter(BaseParameter):
         else:
             return "False"
 
-    def sub(self, input: Optional[bool], obj):
-        return self._strsub(
-            self._val_to_str(input),
-            obj,
-            self._val_to_str(self.default),
-        )
+    def get_val(self, input: Optional[bool]) -> Literal['True', 'False']:
+        val = super().get_val(input)
+        if type(val) == bool:
+            if val:
+                return "True"
+            else:
+                return "False"
+        else:
+            raise ValueError('Boolean parameter must be true or false')
 
 
 class ObjectParameter(BaseParameter):
@@ -139,12 +129,31 @@ class Parameters(BaseModel):
             parms = {p["name"]: p for p in parameters}
             return cls(__root__=parms)
 
-    def find_parameter_in_string(self, input_str) -> Optional[Parameter]:
+    @staticmethod
+    def str_has_parameter_expression(input_str: str) -> bool:
         matches = re.findall(r"\${{ parameters\.(\w+)", input_str)
+        return bool(matches)
+
+    def sub(self, obj: str, parameter_values: dict):
+        matches = re.findall(r"\${{ parameters\.(\w+)", obj)
         if matches:
-            return self.__root__[matches[0]]
+            is_single = re.match(r"^\${{ parameters\.(\w+) }}$", obj)
+            if is_single:
+                parameter = self.__root__[matches[0]]
+                val = parameter_values.get(parameter.name)
+                return parameter.get_val(val)
+            else:
+                for match in matches:
+                    parameter = self.__root__[match]
+                    val = parameter_values.get(parameter.name)
+                    print(obj)
+                    print(parameter)
+                    print(val)
+                    obj = obj.replace('${{ parameters.' + parameter.name + ' }}', parameter.get_val(val))
+                    print(obj)
+                return obj
         else:
-            return None
+            raise Exception('parameter expression not found in input')
 
 
 class Context(BaseModel):
@@ -152,9 +161,7 @@ class Context(BaseModel):
 
     parameters: Parameters = Field(default_factory=lambda: Parameters(__root__=dict()))
     parameter_values: dict = Field(default_factory=dict)
-    variables: dict = Field(default_factory=dict)
     cwd: Path
-    current_key: Optional[str] = None
 
     def merge(self, obj: dict):
         fields = self.__fields__

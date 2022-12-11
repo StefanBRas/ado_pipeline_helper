@@ -1,3 +1,11 @@
+"""Resolving expressions on the from {{ }}
+
+Thought I would have to resolve all expressions, but I found out that I only need to substitute
+template parameters in them. Leaving It because it might be useful for helping with writting the
+expressions at some point.
+
+"""
+
 import re
 from typing import Optional
 

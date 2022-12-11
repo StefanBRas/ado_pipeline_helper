@@ -54,3 +54,12 @@ stages:
 - template: templates/stages/many_parameters.yml
   parameters:
     somestring: "default" 
+- stage: other_parameter_tests
+  jobs:
+    job: other_parameter_tests_job
+    steps:
+      - template: templates/steps/parameters_shorthand.yml
+        parameters:
+          parameter1: "non_default" 
+      - template: templates/steps/parameters_shorthand.yml
+
