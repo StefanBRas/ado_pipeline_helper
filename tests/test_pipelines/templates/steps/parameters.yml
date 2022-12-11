@@ -5,3 +5,7 @@ parameters:
 steps:
 - bash: echo ${{ parameters.parameter1 }} 
   displayName: ParametersStep
+- bash: echo ${{parameters.parameter1 }} 
+- bash: echo ${{ parameters.parameter1}} 
+- bash: echo ${{parameters.parameter1}} 
+- bash: echo ${{  parameters.parameter1  }} 

@@ -15,6 +15,10 @@ def listify(obj) -> list:
 def set_if_not_none(
     obj: Union[dict, BaseModel], key: str, val: Any
 ) -> Union[dict, BaseModel]:
+    """Set value on object, unless value is none.
+
+    Used to avoid a lot of `if value is not None: obj[key] = value`.
+    """
     if val is not None:
         if isinstance(obj, dict):  # could do some hasattr stuff here
             obj[key] = val
@@ -23,9 +27,3 @@ def set_if_not_none(
     return obj
 
 
-def set_if_not_none_m(
-    obj: Union[dict, BaseModel], key_vals: dict[str, Any]
-) -> Union[dict, BaseModel]:
-    for key, val in key_vals.items():
-        set_if_not_none(obj, key, val)
-    return obj

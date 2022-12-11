@@ -84,7 +84,7 @@ class YamlResolver:
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
                 new_obj = {"template": relative_path}
-                new_obj = set_if_not_none(
+                set_if_not_none(
                     new_obj, "parameters", extend_node.get("parameters")
                 )
                 if self._is_jobs_template(template_dict):
