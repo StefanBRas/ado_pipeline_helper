@@ -79,7 +79,9 @@ class Client:
         return content.get("name")
 
     def _get_pipeline_client(self):
-        credentials = BasicAuthentication(self._user or '', self._token.get_secret_value())
+        credentials = BasicAuthentication(
+            self._user or "", self._token.get_secret_value()
+        )
         organization_url = f"https://dev.azure.com/{self._organization}"
         connection = Connection(base_url=organization_url, creds=credentials)
         return connection.clients_v6_0.get_pipelines_client()
