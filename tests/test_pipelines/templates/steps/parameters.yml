@@ -10,3 +10,6 @@ steps:
 - bash: echo ${{parameters.parameter1}} 
 - bash: echo ${{  parameters.parameter1  }} 
 - bash: "echo ${{  parameters.parameter1 }}"
+  displayName: DoubleQuoted
+- bash: 'echo ${{  parameters.parameter1 }}'
+  displayName: SingleQuoted 
