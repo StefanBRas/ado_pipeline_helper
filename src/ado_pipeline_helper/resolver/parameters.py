@@ -7,11 +7,9 @@ from pathlib import Path
 from typing import Any, Literal, Mapping, Optional, Union
 
 from pydantic import BaseModel, Field
-from ruamel.yaml.scalarstring import ScalarString
 
 
 PARAMETER_EXPRESSION_REGEX = re.compile(r"\${{\s*parameters\.(\w+)\s*}}")
-SINGLE_PARAMETER_EXPRESSION_REGEX = re.compile(r"^\${{\s*parameters\.(\w+)\s*}}$")
 
 class BaseParameter(BaseModel):
     name: str
@@ -140,25 +138,20 @@ class Parameters(BaseModel):
         return bool(matches)
 
     def sub(self, obj: str, parameter_values: dict):
-        matches = re.findall(PARAMETER_EXPRESSION_REGEX, obj)
+        matches = list(re.finditer(PARAMETER_EXPRESSION_REGEX, obj))
         if matches:
-            is_single = re.match(SINGLE_PARAMETER_EXPRESSION_REGEX, obj)
+            is_single = len(matches[0].group(0)) == len(obj)
             if is_single:
-                parameter = self.__root__[matches[0]]
+                parameter = self.__root__[matches[0].group(1)]
                 val = parameter_values.get(parameter.name)
                 return parameter.get_val(val)
             else:
-                def _sub_func(match: re.Match) -> str:
+                for match in matches:
                     parameter_name = match.group(1)
                     parameter = self.__root__[parameter_name]
                     val = parameter_values.get(parameter.name)
-                    return parameter.get_val(val)
-                if isinstance(obj, ScalarString): 
-                    # ScalarString inherits from str but re.sub doesnt like it
-                    actual_string = str(obj)
-                    new_string = re.sub(PARAMETER_EXPRESSION_REGEX, _sub_func, actual_string)
-                    return obj.__class__(new_string)
-                return re.sub(PARAMETER_EXPRESSION_REGEX, _sub_func, obj)
+                    obj = obj.replace(match.group(0), parameter.get_val(val))
+                return obj
         else:
             raise Exception("parameter expression not found in input")
 

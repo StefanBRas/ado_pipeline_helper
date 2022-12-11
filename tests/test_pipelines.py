@@ -33,4 +33,4 @@ def test_validate(get_client: Callable[..., Client], id_, path):
     validated = client.validate()
     assert isinstance(preview, Run)
     assert isinstance(validated, Run)
-    assert validated.final_yaml == preview.final_yaml
+    assert preview.final_yaml == validated.final_yaml

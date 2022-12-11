@@ -21,6 +21,10 @@ stages:
     steps:
     - script: echo Hello, world!
       displayName: 'Run a one-line script'
+    - script: "echo Hello, world!"
+      displayName: 'test_double_quoted'
+    - script: "echo Hello, world!"
+      displayName: 'test_single_quoted'
   - template: templates/jobs/simple.yml
   - template: templates/jobs/parameters.yml
     parameters:
