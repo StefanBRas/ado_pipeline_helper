@@ -13,3 +13,7 @@ steps:
   displayName: DoubleQuoted
 - bash: 'echo ${{  parameters.parameter1 }}'
   displayName: SingleQuoted 
+- bash: "echo something"
+  displayName: DoubleQuotedButNoParameter
+- bash: 'echo something'
+  displayName: DoubleQuotedButNoParameter

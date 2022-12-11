@@ -39,4 +39,5 @@ stages:
 - template: templates/stages/simple_parameter.yml
   parameters:
     parameter_stage: "value"
+  
 

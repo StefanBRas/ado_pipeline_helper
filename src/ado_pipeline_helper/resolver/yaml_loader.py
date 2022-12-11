@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Literal, OrderedDict
 
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import ScalarString
 
 from ado_pipeline_helper.resolver.parameters import Context, Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
@@ -24,9 +25,9 @@ class YamlStrDumper(YAML):
             return stream.getvalue()
 
 
-yaml = YamlStrDumper()
+yaml = YamlStrDumper(typ='rt')
 yaml.preserve_quotes = True  # type:ignore
-unordered_yaml = YamlStrDumper(typ="safe")  # sic
+unordered_yaml = YamlStrDumper(typ="safe")
 
 TemplateTypes = Literal["stages", "jobs", "steps", "variables"]
 
@@ -141,7 +142,8 @@ class YamlResolver:
 
         initial_context = Context(cwd=self.pipeline_path)
         yaml_resolved = traverse(self.pipeline, mod_func, context=initial_context)
-        return str(yaml.dump(yaml_resolved))
+        result = yaml.dump(yaml_resolved)
+        return str(result)
 
     @staticmethod
     def _is_jobs_template(dct: dict):
