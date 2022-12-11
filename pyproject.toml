@@ -12,7 +12,7 @@ pydantic = "^1.10.2"
 ruamel-yaml = "^0.17.21"
 typer = {extras = ["all"], version = "^0.7.0"}
 azure-devops = "^6.0.0b4"
-# parsimonious = "^0.10.0" was used for express resolver
+parsimonious = "^0.10.0" was used for express resolver
 
 
 [tool.poetry.group.dev.dependencies]
