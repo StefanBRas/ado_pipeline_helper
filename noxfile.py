@@ -2,7 +2,7 @@ from pathlib import Path
 from nox_poetry import session, Session
 
 python_versions = ["3.11", "3.10", "3.9"]
-@session(python=python_versions, reuse_venv=True)
+@session(python=python_versions)
 def tests(session: Session):
     session.install(
         "pytest",
@@ -12,7 +12,7 @@ def tests(session: Session):
     session.notify("coverage", posargs=[])
 
 
-@session(python=python_versions[0], reuse_venv=True)
+@session(python=python_versions[0])
 def coverage(session: Session) -> None:
     """Produce the coverage report."""
     session.install("coverage")

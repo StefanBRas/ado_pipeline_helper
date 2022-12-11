@@ -8,7 +8,7 @@ lint:
 	poetry run ruff src tests
 
 test:
-	poetry run nox
+	poetry run nox -r
 
 
 
