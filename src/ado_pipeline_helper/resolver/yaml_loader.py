@@ -3,7 +3,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal, OrderedDict, Tuple
+from typing import Any, Literal, OrderedDict
 
 from ruamel.yaml import YAML
 
@@ -138,10 +138,10 @@ class YamlResolver:
                 new_obj = parameters.sub(obj, parameter_values)
                 return TraversalResult(True, new_obj, context)
             return TraversalResult(False, obj, context)
+
         initial_context = Context(cwd=self.pipeline_path)
         yaml_resolved = traverse(self.pipeline, mod_func, context=initial_context)
         return str(yaml.dump(yaml_resolved))
-
 
     @staticmethod
     def _is_jobs_template(dct: dict):

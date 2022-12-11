@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 class BaseParameter(BaseModel):
     name: str
     default: Any
-    
+
     def get_val(self, input):
         return input if input is not None else self.default
 
@@ -26,11 +26,12 @@ class StringParameter(BaseParameter):
 
 
 class NumberParameter(BaseParameter):
-    default: Optional[int] # TODO: can they be float?
+    default: Optional[int]  # TODO: can they be float?
     type: Literal["number"] = "number"
 
     def get_val(self, input: Optional[int]) -> str:
         return str(super().get_val(input))
+
 
 class BooleanParameter(BaseParameter):
     default: Optional[bool]
@@ -45,7 +46,7 @@ class BooleanParameter(BaseParameter):
         else:
             return "False"
 
-    def get_val(self, input: Optional[bool]) -> Literal['True', 'False']:
+    def get_val(self, input: Optional[bool]) -> Literal["True", "False"]:
         val = super().get_val(input)
         if type(val) == bool:
             if val:
@@ -53,7 +54,7 @@ class BooleanParameter(BaseParameter):
             else:
                 return "False"
         else:
-            raise ValueError('Boolean parameter must be true or false')
+            raise ValueError("Boolean parameter must be true or false")
 
 
 class ObjectParameter(BaseParameter):
@@ -149,11 +150,14 @@ class Parameters(BaseModel):
                     print(obj)
                     print(parameter)
                     print(val)
-                    obj = obj.replace('${{ parameters.' + parameter.name + ' }}', parameter.get_val(val))
+                    obj = obj.replace(
+                        "${{ parameters." + parameter.name + " }}",
+                        parameter.get_val(val),
+                    )
                     print(obj)
                 return obj
         else:
-            raise Exception('parameter expression not found in input')
+            raise Exception("parameter expression not found in input")
 
 
 class Context(BaseModel):
