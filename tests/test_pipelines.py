@@ -14,14 +14,19 @@ TEST_PIPELINES = [
 ]
 
 
-@pytest.mark.parametrize("path,id_", TEST_PIPELINES)
+def _id_func(val):
+    if isinstance(val, Path):
+        return val.name
+    return val
+
+@pytest.mark.parametrize("path,id_", TEST_PIPELINES, ids=_id_func)
 def test_preview(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
     preview = client.preview()
     assert isinstance(preview, Run)
 
 
-@pytest.mark.parametrize("path,id_", TEST_PIPELINES)
+@pytest.mark.parametrize("path,id_", TEST_PIPELINES, ids=_id_func)
 def test_validate(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
     preview = client.preview()

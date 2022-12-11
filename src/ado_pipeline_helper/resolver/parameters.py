@@ -11,7 +11,7 @@ from ruamel.yaml.scalarstring import ScalarString
 
 
 PARAMETER_EXPRESSION_REGEX = re.compile(r"\${{\s*parameters\.(\w+)\s*}}")
-SINGLE_PARAMETER_EXPRESSION_REGEX = re.compile(r"$\${{\s*parameters\.(\w+)\s*}}^")
+SINGLE_PARAMETER_EXPRESSION_REGEX = re.compile(r"^\${{\s*parameters\.(\w+)\s*}}$")
 
 class BaseParameter(BaseModel):
     name: str
@@ -153,11 +153,11 @@ class Parameters(BaseModel):
                     parameter = self.__root__[parameter_name]
                     val = parameter_values.get(parameter.name)
                     return parameter.get_val(val)
-                print(obj)
-                print(type(obj))
                 if isinstance(obj, ScalarString): 
                     # ScalarString inherits from str but re.sub doesnt like it
-                    obj = str(obj)
+                    actual_string = str(obj)
+                    new_string = re.sub(PARAMETER_EXPRESSION_REGEX, _sub_func, actual_string)
+                    return obj.__class__(new_string)
                 return re.sub(PARAMETER_EXPRESSION_REGEX, _sub_func, obj)
         else:
             raise Exception("parameter expression not found in input")

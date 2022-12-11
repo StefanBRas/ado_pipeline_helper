@@ -54,4 +54,10 @@ stages:
 - template: templates/stages/many_parameters.yml
   parameters:
     somestring: "default" 
+- stage: test_white_space_in_parameter_expression_stage
+  jobs:
+  - job: test_white_space_in_parameter_expression_job
+    steps:
+    - script: echo step one
+    - script: echo step two
 
