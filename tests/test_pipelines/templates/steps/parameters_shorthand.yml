@@ -1,6 +1,0 @@
-parameters:
-  parameter1: default_value
-
-steps:
-- bash: echo ${{ parameters.parameter1 }} 
-  displayName: ParametersStep
