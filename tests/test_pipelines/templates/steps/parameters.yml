@@ -9,4 +9,3 @@ steps:
 - bash: echo ${{ parameters.parameter1}} 
 - bash: echo ${{parameters.parameter1}} 
 - bash: echo ${{  parameters.parameter1  }} 
-- bash: echo ${{	parameters.parameter1}} # tab

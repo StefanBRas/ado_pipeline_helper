@@ -18,7 +18,6 @@ TEST_PIPELINES = [
 def test_preview(get_client: Callable[..., Client], id_, path):
     client = get_client(id_, path)
     preview = client.preview()
-    print(preview)
     assert isinstance(preview, Run)
 
 

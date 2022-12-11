@@ -9,6 +9,9 @@ from typing import Any, Literal, Mapping, Optional, Union
 from pydantic import BaseModel, Field
 
 
+PARAMETER_EXPRESSION_REGEX = re.compile(r"\${{\s+parameters\.(\w+)\s+}}")
+SINGLE_PARAMETER_EXPRESSION_REGEX = re.compile(r"$\${{\s+parameters\.(\w+)\s+}}^")
+
 class BaseParameter(BaseModel):
     name: str
     default: Any
@@ -132,26 +135,24 @@ class Parameters(BaseModel):
 
     @staticmethod
     def str_has_parameter_expression(input_str: str) -> bool:
-        matches = re.findall(r"\${{ parameters\.(\w+)", input_str)
+        matches = re.findall(PARAMETER_EXPRESSION_REGEX, input_str)
         return bool(matches)
 
     def sub(self, obj: str, parameter_values: dict):
-        matches = re.findall(r"\${{ parameters\.(\w+)", obj)
+        matches = re.findall(PARAMETER_EXPRESSION_REGEX, obj)
         if matches:
-            is_single = re.match(r"^\${{ parameters\.(\w+) }}$", obj)
+            is_single = re.match(SINGLE_PARAMETER_EXPRESSION_REGEX, obj)
             if is_single:
                 parameter = self.__root__[matches[0]]
                 val = parameter_values.get(parameter.name)
                 return parameter.get_val(val)
             else:
-                for match in matches:
-                    parameter = self.__root__[match]
+                def _sub_func(match: re.Match) -> str:
+                    parameter_name = match.group(1)
+                    parameter = self.__root__[parameter_name]
                     val = parameter_values.get(parameter.name)
-                    obj = obj.replace(
-                        "${{ parameters." + parameter.name + " }}",
-                        parameter.get_val(val),
-                    )
-                return obj
+                    return parameter.get_val(val)
+                return re.sub(PARAMETER_EXPRESSION_REGEX, _sub_func, obj)
         else:
             raise Exception("parameter expression not found in input")
 
