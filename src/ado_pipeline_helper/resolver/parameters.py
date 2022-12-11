@@ -147,14 +147,10 @@ class Parameters(BaseModel):
                 for match in matches:
                     parameter = self.__root__[match]
                     val = parameter_values.get(parameter.name)
-                    print(obj)
-                    print(parameter)
-                    print(val)
                     obj = obj.replace(
                         "${{ parameters." + parameter.name + " }}",
                         parameter.get_val(val),
                     )
-                    print(obj)
                 return obj
         else:
             raise Exception("parameter expression not found in input")
