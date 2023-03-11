@@ -15,7 +15,7 @@ from ado_pipeline_helper.cli import TOKEN_ENV_VAR
 def get_client():
     personal_access_token = os.environ[TOKEN_ENV_VAR]
 
-    overrides = {"{{crazy string $}} manual override":
+    overrides = {"${{ coalesce(true,'templates/stages/simple.yml')}}":
         "templates/stages/simple.yml"}
     def _get_client(id_, path):
         settings = ClientSettings(

@@ -39,6 +39,5 @@ stages:
 - template: templates/stages/simple_parameter.yml
   parameters:
     parameter_stage: "value"
-- template: {{crazy string $}} manual override
-  
+- template: ${{ coalesce(true,'templates/stages/simple.yml')}}
 
