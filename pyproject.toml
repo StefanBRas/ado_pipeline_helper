@@ -13,6 +13,7 @@ ruamel-yaml = "^0.17.21"
 typer = {extras = ["all"], version = "^0.7.0"}
 azure-devops = "^6.0.0b4"
 pyright = "^1.1.298"
+structlog = "^22.3.0"
 
 [tool.pyright]
 pythonVersion = "3.10"
@@ -28,6 +29,7 @@ coverage = "6.5.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
 
 
 [tool.poetry.scripts]

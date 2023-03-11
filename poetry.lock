@@ -475,6 +475,20 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
+name = "structlog"
+version = "22.3.0"
+description = "Structured Logging for Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+dev = ["structlog[docs,tests,typing]"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-mermaid", "twisted"]
+tests = ["coverage[toml]", "freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "simplejson"]
+typing = ["mypy", "rich", "twisted"]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -551,7 +565,7 @@ test = ["covdefaults (>=2.2.2)", "coverage (>=7.1)", "coverage-enable-subprocess
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<4.0" # because of nox-poetry
-content-hash = "dad35c2cb1ffba1d88173fb7cd7f5041e40dfb53694be71ab48fe922d4f486f3"
+content-hash = "d069e232aad62da672d3012261c13895bca52d1ae4ef347d49c0ed0a32afff63"
 
 [metadata.files]
 argcomplete = [
@@ -933,6 +947,10 @@ shellingham = [
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+structlog = [
+    {file = "structlog-22.3.0-py3-none-any.whl", hash = "sha256:b403f344f902b220648fa9f286a23c0cc5439a5844d271fec40562dbadbc70ad"},
+    {file = "structlog-22.3.0.tar.gz", hash = "sha256:e7509391f215e4afb88b1b80fa3ea074be57a5a17d794bd436a5c949da023333"},
 ]
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},

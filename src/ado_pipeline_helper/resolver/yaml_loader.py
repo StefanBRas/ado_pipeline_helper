@@ -5,12 +5,15 @@ from functools import partial
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, OrderedDict
+import structlog
+
 
 from ruamel.yaml import YAML
 
 from ado_pipeline_helper.resolver.parameters import Context, Parameters
 from ado_pipeline_helper.utils import listify, set_if_not_none
 
+logger = structlog.get_logger()
 
 class YamlStrDumper(YAML):
     """wrapper so we can dump to a string."""
@@ -85,6 +88,8 @@ class YamlResolver:
         return str(result)
 
     def _mod_func(self, obj, context: Context, overrides: dict) -> TraversalResult:
+        logger.debug("looking at ", obj)
+        print("here now")
         match obj:
             case dict() if 'extends' in obj:
                 extend_node = obj["extends"]
@@ -141,6 +146,7 @@ class YamlResolver:
                 context.parameter_values = obj.get("parameters", {})
                 return TraversalResult(True, template_resolved, context)
             case str() if obj in overrides:
+                logger.debug("something")
                 return overrides[obj]
             case str() if Parameters.str_has_parameter_expression(obj):
                 # parameters in template, add to context
@@ -148,6 +154,11 @@ class YamlResolver:
                 parameter_values: dict = context.parameter_values
                 new_obj = parameters.sub(obj, parameter_values)
                 return TraversalResult(True, new_obj, context)
+            case str() if '{{' in obj and '}}' in obj:
+                logger.warn("something")
+            case _:
+                logger.debug("Nothing to do for {}", obj)
+
         return TraversalResult(False, obj, context)
 
 
