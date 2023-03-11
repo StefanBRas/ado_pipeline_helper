@@ -16,7 +16,7 @@ def get_client():
     personal_access_token = os.environ[TOKEN_ENV_VAR]
 
     overrides = {"${{ coalesce('','templates/stages/simple2.yml')}}":
-        "templates/stages/simple.yml"}
+        "templates/stages/simple2.yml"}
     def _get_client(id_, path):
         settings = ClientSettings(
             organization="sbras",
