@@ -31,6 +31,7 @@ class Client:
         pipeline_id: Optional[int] = None,
         pipeline_name: Optional[str] = None,
         user: Optional[str] = None,
+        overrides: dict | None = None,
     ) -> None:
         self._organization = organization
         self._project = project
@@ -40,6 +41,7 @@ class Client:
         self._pipeline_name = pipeline_name
         self._user = user
         self._pipeline_client = self._get_pipeline_client()
+        self._overrides = overrides
 
     @classmethod
     def from_client_settings(cls, settings: ClientSettings):
@@ -87,7 +89,7 @@ class Client:
         return connection.clients_v6_0.get_pipelines_client()
 
     def load_yaml(self) -> str:
-        resolver = YamlResolver(self._pipeline_path)
+        resolver = YamlResolver(self._pipeline_path, self._overrides)
         return resolver.get_yaml()
 
     def _call_run_pipeline_endpoint(self, run_parameters: Optional[dict] = None) -> Run:

@@ -1,7 +1,7 @@
 from pathlib import Path
 from nox_poetry import session, Session
 
-python_versions = ["3.11", "3.10", "3.9"]
+python_versions = ["3.11", "3.10"]
 @session(python=python_versions)
 def tests(session: Session):
     session.install(

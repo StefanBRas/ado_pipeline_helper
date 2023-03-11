@@ -31,3 +31,4 @@ class ClientSettings(BaseModel):
     pipeline_path: Path
     pipeline_id: Optional[int]  # If not set, fetches from name of pipeline
     user: str = ""
+    overrides: dict | None = None

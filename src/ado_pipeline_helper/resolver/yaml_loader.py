@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import partial
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, OrderedDict
@@ -45,20 +46,23 @@ def traverse(
     mod_func: Callable[..., TraversalResult],
     context: Context,
 ) -> Any:
+    """Traverse a dict-like object, modifying in place."""
+
     mod_func_result = mod_func(obj, context)
     context = mod_func_result.context
     if mod_func_result.has_change:
         return traverse(mod_func_result.val, mod_func, context)
-    if isinstance(obj, list):
-        new_list = []
-        for val in obj:
-            result = traverse(val, mod_func, context)
-            new_list.extend(listify(result))
-        return new_list
-    if isinstance(obj, dict):
-        for key, val in list(obj.items()):
-            obj[key] = traverse(obj[key], mod_func, context)
-        return obj
+    match obj:
+        case list():
+            new_list = []
+            for val in obj:
+                result = traverse(val, mod_func, context)
+                new_list.extend(listify(result))
+            return new_list
+        case dict():
+            for key, val in list(obj.items()):
+                obj[key] = traverse(obj[key], mod_func, context)
+            return obj
     return obj
 
 
@@ -67,15 +71,22 @@ class YamlResolveError(Exception):
 
 
 class YamlResolver:
-    def __init__(self, pipeline_path: Path) -> None:
+    def __init__(self, pipeline_path: Path, overrides: dict | None = None) -> None:
         self.pipeline_path = pipeline_path
         content = self.pipeline_path.read_text()
         self.pipeline: OrderedDict = yaml.load(content)
+        self.overrides = overrides or {}
 
     def get_yaml(self) -> str:
-        def mod_func(obj, context: Context) -> TraversalResult:
-            # is extend template
-            if isinstance(obj, dict) and "extends" in obj:
+        initial_context = Context(cwd=self.pipeline_path)
+        mod_func = partial(self._mod_func, overrides=self.overrides)
+        yaml_resolved = traverse(self.pipeline, mod_func, context=initial_context)
+        result = yaml.dump(yaml_resolved)
+        return str(result)
+
+    def _mod_func(self, obj, context: Context, overrides: dict) -> TraversalResult:
+        match obj:
+            case dict() if 'extends' in obj:
                 extend_node = obj["extends"]
                 relative_path = extend_node["template"]
                 if "@" in relative_path:
@@ -95,10 +106,10 @@ class YamlResolver:
                     raise YamlResolveError(
                         "Can only extend from step, job or stage template."
                     )
-                del obj["extends"]
+                del obj["extends"] # NOTE: Maybe we shouldn't modify inplace
                 return TraversalResult(True, obj, context)
-            # is a template reference
-            if isinstance(obj, dict) and "template" in obj:
+            case dict() if "template" in obj:
+                # is a template reference
                 relative_path = obj["template"]
                 if "@" in relative_path:
                     return TraversalResult(False, obj, context)
@@ -129,18 +140,16 @@ class YamlResolver:
                 context.parameters = parameters
                 context.parameter_values = obj.get("parameters", {})
                 return TraversalResult(True, template_resolved, context)
-            # parameters in template, add to context
-            if isinstance(obj, str) and Parameters.str_has_parameter_expression(obj):
+            case str() if obj in overrides:
+                return overrides[obj]
+            case str() if Parameters.str_has_parameter_expression(obj):
+                # parameters in template, add to context
                 parameters: Parameters = context.parameters
                 parameter_values: dict = context.parameter_values
                 new_obj = parameters.sub(obj, parameter_values)
                 return TraversalResult(True, new_obj, context)
-            return TraversalResult(False, obj, context)
+        return TraversalResult(False, obj, context)
 
-        initial_context = Context(cwd=self.pipeline_path)
-        yaml_resolved = traverse(self.pipeline, mod_func, context=initial_context)
-        result = yaml.dump(yaml_resolved)
-        return str(result)
 
     @staticmethod
     def _is_jobs_template(dct: dict):
@@ -193,3 +202,4 @@ class YamlResolver:
         if isinstance(variables, dict):
             return [{"name": key, "value": value} for key, value in variables.items()]
         return variables
+
