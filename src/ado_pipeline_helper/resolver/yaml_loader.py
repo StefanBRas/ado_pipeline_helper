@@ -88,9 +88,19 @@ class YamlResolver:
         return str(result)
 
     def _mod_func(self, obj, context: Context, overrides: dict) -> TraversalResult:
-        logger.debug("looking at ", obj)
-        print("here now")
         match obj:
+            case str() if obj in overrides:
+                new_val = overrides[obj]
+                logger.debug("Substituting string %s for %s", obj, new_val)
+                return new_val
+            case str() if Parameters.str_has_parameter_expression(obj):
+                # parameters in template, add to context
+                parameters: Parameters = context.parameters
+                parameter_values: dict = context.parameter_values
+                new_obj = parameters.sub(obj, parameter_values)
+                return TraversalResult(True, new_obj, context)
+            case str() if '{{' in obj and '}}' in obj:
+                logger.warn("found template string that could be resolved. String: %s", obj)
             case dict() if 'extends' in obj:
                 extend_node = obj["extends"]
                 relative_path = extend_node["template"]
@@ -116,8 +126,11 @@ class YamlResolver:
             case dict() if "template" in obj:
                 # is a template reference
                 relative_path = obj["template"]
+                if relative_path in overrides:
+                    relative_path = overrides[relative_path]
                 if "@" in relative_path:
                     return TraversalResult(False, obj, context)
+
                 template_path = context.cwd.parent.joinpath(relative_path)
                 template_content = template_path.read_text()
                 template_dict = yaml.load(template_content)
@@ -145,19 +158,8 @@ class YamlResolver:
                 context.parameters = parameters
                 context.parameter_values = obj.get("parameters", {})
                 return TraversalResult(True, template_resolved, context)
-            case str() if obj in overrides:
-                logger.debug("something")
-                return overrides[obj]
-            case str() if Parameters.str_has_parameter_expression(obj):
-                # parameters in template, add to context
-                parameters: Parameters = context.parameters
-                parameter_values: dict = context.parameter_values
-                new_obj = parameters.sub(obj, parameter_values)
-                return TraversalResult(True, new_obj, context)
-            case str() if '{{' in obj and '}}' in obj:
-                logger.warn("something")
             case _:
-                logger.debug("Nothing to do for {}", obj)
+                logger.debug("Nothing to do")
 
         return TraversalResult(False, obj, context)
 

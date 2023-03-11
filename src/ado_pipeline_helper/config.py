@@ -17,6 +17,7 @@ class CliSettingsFile(BaseSettings):
     organization: Optional[str]
     project: Optional[str]
     pipelines: dict[Path, PipeLineSettings] = Field(default_factory=dict)
+    overrides: dict | None = None
 
     @classmethod
     def read(cls, config_path: Path = DEFAULT_CONFIG_PATH):

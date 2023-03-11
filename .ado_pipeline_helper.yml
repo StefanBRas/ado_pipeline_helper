@@ -3,3 +3,5 @@ project: pypeline
 pipelines:
   tests/test_pipelines/test_pipeline_1.yml:
     id: 3
+overrides:
+  "${{ coalesce('','templates/stages/simple2.yml')}}": "templates/stages/simple2.yml"
