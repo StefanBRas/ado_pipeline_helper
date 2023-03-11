@@ -39,5 +39,5 @@ stages:
 - template: templates/stages/simple_parameter.yml
   parameters:
     parameter_stage: "value"
-- template: ${{ coalesce(false,'templates/stages/simple.yml')}}
+- template: ${{ coalesce(none,'templates/stages/simple.yml')}}
 
