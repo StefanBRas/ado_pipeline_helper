@@ -139,8 +139,7 @@ class Parameters(BaseModel):
         return bool(matches)
 
     def sub(self, obj: str, parameter_values: dict):
-        """ Substitue templated strings with values from parameters
-        """
+        """Substitue templated strings with values from parameters"""
         matches = list(re.finditer(PARAMETER_EXPRESSION_REGEX, obj))
         if matches:
             is_single = len(matches[0].group(0)) == len(obj)
@@ -171,7 +170,7 @@ class Context(BaseModel):
 
     parameters: Parameters = Field(default_factory=lambda: Parameters(__root__=dict()))
     parameter_values: dict = Field(default_factory=dict)
-    cwd: Path # For nested templates, i think?
+    cwd: Path  # For nested templates, i think?
 
     def merge(self, obj: dict):
         fields = self.__fields__

@@ -11,12 +11,15 @@ from ado_pipeline_helper.cli import TOKEN_ENV_VAR
 # test_pipeline_dir = Path(__file__).parent.joinpath("test_pipelines")
 # pipelines =  test_pipeline_dir.glob("test_pipeline_*.yml")
 
+
 @pytest.fixture
 def get_client():
     personal_access_token = os.environ[TOKEN_ENV_VAR]
 
-    overrides = {"${{ coalesce('','templates/stages/simple2.yml')}}":
-        "templates/stages/simple2.yml"}
+    overrides = {
+        "${{ coalesce('','templates/stages/simple2.yml')}}": "templates/stages/simple2.yml"
+    }
+
     def _get_client(id_, path):
         settings = ClientSettings(
             organization="sbras",
@@ -25,8 +28,7 @@ def get_client():
             pipeline_id=id_,
             pipeline_path=path,
             user="stefan-bruhn",
-            overrides=overrides
-
+            overrides=overrides,
         )
         return Client.from_client_settings(settings)
 

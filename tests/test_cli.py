@@ -8,12 +8,16 @@ TEST_PIPELINE = "tests/test_pipelines/test_pipeline_1.yml"
 
 
 def test_preview(pat_env):
-    result = runner.invoke(cli, ["preview", TEST_PIPELINE, '--user', 'stefan-bruhn@hotmail.com'])
+    result = runner.invoke(
+        cli, ["preview", TEST_PIPELINE, "--user", "stefan-bruhn@hotmail.com"]
+    )
     assert result.exit_code == 0, result
     assert "trigger" in result.stdout
 
 
 def test_validate(pat_env):
-    result = runner.invoke(cli, ["validate", TEST_PIPELINE, '--user', 'stefan-bruhn@hotmail.com'])
+    result = runner.invoke(
+        cli, ["validate", TEST_PIPELINE, "--user", "stefan-bruhn@hotmail.com"]
+    )
     assert result.exit_code == 0, result
     assert "trigger" in result.stdout

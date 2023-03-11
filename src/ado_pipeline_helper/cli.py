@@ -40,7 +40,7 @@ def _get_client(
             "pipeline_path": path,
             "token": SecretStr(token),
             "user": user,
-            "overrides": settings_from_config_file.overrides or {}
+            "overrides": settings_from_config_file.overrides or {},
         }
     )
     return Client.from_client_settings(client_settings)

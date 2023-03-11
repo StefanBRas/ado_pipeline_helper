@@ -15,6 +15,7 @@ from ado_pipeline_helper.utils import listify, set_if_not_none
 
 logger = structlog.get_logger()
 
+
 class YamlStrDumper(YAML):
     """wrapper so we can dump to a string."""
 
@@ -99,9 +100,11 @@ class YamlResolver:
                 parameter_values: dict = context.parameter_values
                 new_obj = parameters.sub(obj, parameter_values)
                 return TraversalResult(True, new_obj, context)
-            case str() if '{{' in obj and '}}' in obj:
-                logger.warn("found template string that could be resolved. String: %s", obj)
-            case dict() if 'extends' in obj:
+            case str() if "{{" in obj and "}}" in obj:
+                logger.warn(
+                    "found template string that could be resolved. String: %s", obj
+                )
+            case dict() if "extends" in obj:
                 extend_node = obj["extends"]
                 relative_path = extend_node["template"]
                 if "@" in relative_path:
@@ -121,7 +124,7 @@ class YamlResolver:
                     raise YamlResolveError(
                         "Can only extend from step, job or stage template."
                     )
-                del obj["extends"] # NOTE: Maybe we shouldn't modify inplace
+                del obj["extends"]  # NOTE: Maybe we shouldn't modify inplace
                 return TraversalResult(True, obj, context)
             case dict() if "template" in obj:
                 # is a template reference
@@ -162,7 +165,6 @@ class YamlResolver:
                 logger.debug("Nothing to do")
 
         return TraversalResult(False, obj, context)
-
 
     @staticmethod
     def _is_jobs_template(dct: dict):
@@ -215,4 +217,3 @@ class YamlResolver:
         if isinstance(variables, dict):
             return [{"name": key, "value": value} for key, value in variables.items()]
         return variables
-
