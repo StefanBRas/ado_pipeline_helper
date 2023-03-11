@@ -1,3 +1,4 @@
+RUN=poetry run
 
 .PHONY: format lint test
 format:
@@ -5,7 +6,7 @@ format:
 	poetry run isort src tests
 
 lint:
-	poetry run ruff src tests
+	${RUN} ruff src tests
 
 test:
 	poetry run nox -r

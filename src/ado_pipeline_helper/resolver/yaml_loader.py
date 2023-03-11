@@ -167,7 +167,6 @@ class YamlResolver:
 
     def handle_jobs_template_dict(self, dct, template_reference, context) -> dict:
         """Resolves jobs template yaml from template reference."""
-
         jobs = self._handle_template(dct, template_reference, "jobs", context)
         return jobs
 

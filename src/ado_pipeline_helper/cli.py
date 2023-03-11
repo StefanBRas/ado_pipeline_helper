@@ -36,7 +36,7 @@ def _get_client(
         {
             "organization": organization or settings_from_config_file.organization,
             "project": project or settings_from_config_file.project,
-            "pipeline_id ": pipeline_id,
+            "pipeline_id": pipeline_id,
             "pipeline_path": path,
             "token": SecretStr(token),
             "user": user,

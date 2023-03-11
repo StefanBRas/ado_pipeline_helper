@@ -9,7 +9,8 @@ DEFAULT_CONFIG_PATH = Path(".ado_pipeline_helper.yml")
 
 
 class PipeLineSettings(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
+    overload: Optional[dict[str, str]] = None # manually substitute these strings
 
 
 class CliSettingsFile(BaseSettings):
