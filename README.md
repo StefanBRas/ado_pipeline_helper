@@ -19,3 +19,4 @@ I started working on a custom resovler but it was a lot of work. You can see it 
 ## Useful links
 
 - [ADO Yaml Reference](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines)
+
