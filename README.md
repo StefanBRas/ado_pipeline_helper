@@ -1,6 +1,6 @@
 # ADO Pipeline helper 
 
-Python package and commandline tool for helping with writing Azure Devops pipelines
+Python package and commandline tool for helping with writing Azure Devops pipelines.
 
 # Features
 None of these are implemented mind you as of now
