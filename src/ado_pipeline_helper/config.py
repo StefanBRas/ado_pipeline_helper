@@ -10,19 +10,24 @@ DEFAULT_CONFIG_PATH = Path(".ado_pipeline_helper.yml")
 
 class PipeLineSettings(BaseModel):
     id: Optional[int] = None
-    overload: Optional[dict[str, str]] = None  # manually substitute these strings
+    overrides: dict[str, str] | None = None
 
 
 class CliSettingsFile(BaseSettings):
     organization: Optional[str]
     project: Optional[str]
     pipelines: dict[Path, PipeLineSettings] = Field(default_factory=dict)
-    overrides: dict | None = None
+    overrides: dict[str, str] | None = None
 
     @classmethod
     def read(cls, config_path: Path = DEFAULT_CONFIG_PATH):
         content = yaml.load(config_path.read_text())
-        return cls(**content)
+        settings = cls(**content)
+        if settings.overrides:
+            for pipeline in settings.pipelines.values():
+                if pipeline.overrides:
+                    pipeline.overrides = settings.overrides | pipeline.overrides
+        return settings
 
 
 class ClientSettings(BaseModel):
