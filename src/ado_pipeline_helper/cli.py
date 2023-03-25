@@ -33,7 +33,9 @@ def _get_client(
     overrides = None
     if pipeline_settings_from_file is not None:
         pipeline_id = pipeline_id or pipeline_settings_from_file.id
-        overrides = pipeline_settings_from_file.overrides or settings_from_config_file.overrides
+        overrides = (
+            pipeline_settings_from_file.overrides or settings_from_config_file.overrides
+        )
     client_settings = ClientSettings.parse_obj(
         {
             "organization": organization or settings_from_config_file.organization,
@@ -42,7 +44,7 @@ def _get_client(
             "pipeline_path": path,
             "token": SecretStr(token),
             "user": user,
-            "overrides": overrides or {}
+            "overrides": overrides or {},
         }
     )
     return Client.from_client_settings(client_settings)

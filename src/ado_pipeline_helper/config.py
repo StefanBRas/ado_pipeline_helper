@@ -26,7 +26,7 @@ class CliSettingsFile(BaseSettings):
         if settings.overrides:
             for pipeline in settings.pipelines.values():
                 if pipeline.overrides:
-                    pipeline.overrides =  settings.overrides | pipeline.overrides
+                    pipeline.overrides = settings.overrides | pipeline.overrides
         return settings
 
 
