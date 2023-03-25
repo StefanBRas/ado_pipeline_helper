@@ -1,6 +1,6 @@
 # ADO Pipeline helper 
 
-Python package and commandline tool for helping with writing Azure Devops pipelines
+Python package and commandline tool for helping with writing Azure Devops pipelines.
 
 # Features
 None of these are implemented mind you as of now
@@ -19,3 +19,4 @@ I started working on a custom resovler but it was a lot of work. You can see it 
 ## Useful links
 
 - [ADO Yaml Reference](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines)
+
