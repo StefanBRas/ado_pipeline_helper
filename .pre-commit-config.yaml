@@ -1,0 +1,13 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.257'
+    hooks:
+    - id: ruff
+  - repo: https://github.com/psf/black
+    rev: 22.10.0 # Replace by any tag/version: https://github.com/psf/black/tags
+    hooks:
+      - id: black
+        name: black
+        language_version: python # Should be a command that runs python3.6+
