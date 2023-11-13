@@ -1,5 +1,8 @@
 # ADO Pipeline helper 
 
+**ARCHIVED**: I fortunantly do not have to work with Azure Devops Pipelines anymore (hopefully ever), so I won't do any work on this. Putting it out there for inspiration for others.
+
+
 Python package and command line tool for helping with writing Azure Devops pipelines.
 
 Primary functionality right now is that you can preview local changes to pipelines without pushing them.
